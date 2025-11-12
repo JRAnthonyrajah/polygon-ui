@@ -234,9 +234,11 @@ class PolyBookMainWindow(QMainWindow):
         # Header with component name and story selector
         header_layout = QHBoxLayout()
         self.component_title = QLabel("Select a component")
+        # Theme-aware styling will be applied in apply_theme_styling
+        self.component_title.setProperty("class", "component-title")
         self.component_title.setStyleSheet(
             """
-            QLabel {
+            QLabel[class="component-title"] {
                 font-size: 18px;
                 font-weight: 600;
                 padding: 0px;
@@ -473,6 +475,36 @@ class PolyBookMainWindow(QMainWindow):
         bg_color = theme.get_color("gray", 0 if is_dark else 1)
         panel_bg = theme.get_color("gray", 1 if not is_dark else 2)
 
+        # Apply colors directly to specific labels to override any hardcoded styles
+        if hasattr(self, "component_title"):
+            self.component_title.setStyleSheet(
+                f"""
+                QLabel[class="component-title"] {{
+                    font-size: 18px;
+                    font-weight: 600;
+                    padding: 0px;
+                    color: {text_color} !important;
+                }}
+                """
+            )
+
+        # Find and update the Components header label
+        for widget in self.findChildren(QLabel):
+            if widget.text() == "Components":
+                widget.setStyleSheet(
+                    f"""
+                    QLabel[class="header"] {{
+                        font-size: 16px;
+                        font-weight: 600;
+                        padding: 8px 0px;
+                        border-bottom: 2px solid {border_color};
+                        margin-bottom: 8px;
+                        color: {text_color} !important;
+                    }}
+                    """
+                )
+                break
+
         # Set comprehensive theme styling
         self.setStyleSheet(
             f"""
@@ -483,12 +515,6 @@ class PolyBookMainWindow(QMainWindow):
             QWidget {{
                 background-color: transparent;
                 color: {text_color};
-            }}
-
-            /* Header labels */
-            QLabel[class="header"] {{
-                color: {text_color};
-                border-bottom-color: {border_color};
             }}
 
             /* Group boxes */

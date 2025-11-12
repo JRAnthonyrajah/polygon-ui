@@ -89,12 +89,13 @@ class PolyBookMainWindow(QMainWindow):
 
         # Header
         header = QLabel("Components")
+        # Theme-aware styling will be applied in apply_theme_styling
+        header.setProperty("class", "header")
         header.setStyleSheet(
             """
-            QLabel {
+            QLabel[class="header"] {
                 font-size: 16px;
                 font-weight: 600;
-                color: #1a1a1a;
                 padding: 8px 0px;
                 border-bottom: 2px solid #e1e5e9;
                 margin-bottom: 8px;
@@ -157,12 +158,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Theme controls
         theme_group = QGroupBox("Theme")
+        theme_group.setProperty("class", "group-box")
         theme_group.setStyleSheet(
             """
-            QGroupBox {
+            QGroupBox[class="group-box"] {
                 font-size: 14px;
                 font-weight: 600;
-                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 16px;
@@ -311,12 +312,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Component preview area
         preview_group = QGroupBox("Preview")
+        preview_group.setProperty("class", "group-box")
         preview_group.setStyleSheet(
             """
-            QGroupBox {
+            QGroupBox[class="group-box"] {
                 font-size: 14px;
                 font-weight: 600;
-                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 16px;
@@ -354,12 +355,13 @@ class PolyBookMainWindow(QMainWindow):
 
         # Props editor
         props_group = QGroupBox("Props")
+        # Theme-aware styling will be applied in apply_theme_styling
+        props_group.setProperty("class", "group-box")
         props_group.setStyleSheet(
             """
-            QGroupBox {
+            QGroupBox[class="group-box"] {
                 font-size: 14px;
                 font-weight: 600;
-                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 0px;
@@ -383,12 +385,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Documentation
         docs_group = QGroupBox("Documentation")
+        docs_group.setProperty("class", "group-box")
         docs_group.setStyleSheet(
             """
-            QGroupBox {
+            QGroupBox[class="group-box"] {
                 font-size: 14px;
                 font-weight: 600;
-                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 0px;
@@ -423,12 +425,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Generated code
         code_group = QGroupBox("Generated Code")
+        code_group.setProperty("class", "group-box")
         code_group.setStyleSheet(
             """
-            QGroupBox {
+            QGroupBox[class="group-box"] {
                 font-size: 14px;
                 font-weight: 600;
-                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 0px;
@@ -471,11 +473,141 @@ class PolyBookMainWindow(QMainWindow):
         # Create and initialize PolygonProvider
         self.polygon_provider = PolygonProvider(theme)
 
+        # Apply theme to main window
+        self.apply_theme_styling()
+
         # Add some example components for testing
         self.add_example_components()
 
         # Populate component list
         self.populate_component_list()
+
+    def apply_theme_styling(self):
+        """Apply theme-aware styling to the main window."""
+        if not self.polygon_provider:
+            return
+
+        theme = self.polygon_provider.theme
+        is_dark = theme.color_scheme == ColorScheme.DARK
+
+        # Theme colors
+        text_color = theme.get_color("gray", 9 if not is_dark else 0)
+        border_color = theme.get_color("gray", 3 if not is_dark else 6)
+        bg_color = theme.get_color("gray", 0 if is_dark else 1)
+        panel_bg = theme.get_color("gray", 1 if not is_dark else 2)
+
+        # Set comprehensive theme styling
+        self.setStyleSheet(
+            f"""
+            QMainWindow {{
+                background-color: {bg_color};
+            }}
+
+            QWidget {{
+                background-color: transparent;
+                color: {text_color};
+            }}
+
+            /* Header labels */
+            QLabel[class="header"] {{
+                color: {text_color};
+                border-bottom-color: {border_color};
+            }}
+
+            /* Group boxes */
+            QGroupBox[class="group-box"] {{
+                color: {text_color};
+                border-color: {border_color};
+                background-color: {panel_bg};
+            }}
+
+            QGroupBox[class="group-box"]::title {{
+                color: {text_color};
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+            }}
+
+            /* Component list */
+            QListWidget {{
+                background-color: {panel_bg};
+                border-color: {border_color};
+            }}
+
+            QListWidget::item {{
+                color: {text_color};
+                background-color: {panel_bg};
+            }}
+
+            QListWidget::item:hover {{
+                background-color: {theme.get_primary_color()}20;
+            }}
+
+            QListWidget::item:selected {{
+                background-color: {theme.get_primary_color()};
+                color: white;
+            }}
+
+            /* Line edits */
+            QLineEdit {{
+                background-color: {panel_bg};
+                color: {text_color};
+                border-color: {border_color};
+            }}
+
+            /* Combo boxes */
+            QComboBox {{
+                background-color: {panel_bg};
+                color: {text_color};
+                border-color: {border_color};
+            }}
+
+            QComboBox::drop-down {{
+                background-color: {panel_bg};
+                border: none;
+            }}
+
+            QComboBox::down-arrow {{
+                border-top-color: {text_color};
+            }}
+
+            /* Text areas */
+            QTextEdit {{
+                background-color: {panel_bg};
+                color: {text_color};
+                border-color: {border_color};
+            }}
+
+            /* Buttons */
+            QPushButton {{
+                background-color: {theme.get_primary_color()};
+                color: white;
+                border-color: {theme.get_primary_color()};
+            }}
+
+            QPushButton:hover {{
+                background-color: {theme.colors.get_color(theme.primary_color, 7 if not is_dark else 5)};
+                border-color: {theme.colors.get_color(theme.primary_color, 7 if not is_dark else 5)};
+            }}
+
+            QPushButton:pressed {{
+                background-color: {theme.colors.get_color(theme.primary_color, 8 if not is_dark else 4)};
+                border-color: {theme.colors.get_color(theme.primary_color, 8 if not is_dark else 4)};
+            }}
+        """
+        )
+
+    def toggle_theme(self):
+        """Toggle between light and dark theme."""
+        if self.polygon_provider:
+            self.polygon_provider.toggle_color_scheme()
+            self.apply_theme_styling()  # Reapply theme-aware styling
+
+    def change_primary_color(self, color: str):
+        """Change the primary color."""
+        if self.polygon_provider:
+            self.polygon_provider.update_theme(primary_color=color)
+            self.apply_theme_styling()  # Reapply theme-aware styling
 
     def add_example_components(self):
         """Add some example components to the registry."""

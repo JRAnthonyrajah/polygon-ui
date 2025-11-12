@@ -12,7 +12,7 @@ from src.polygon_ui.layout.core.responsive import (
     ResponsiveProps,
     responsive,
     cols,
-    spacing
+    spacing,
 )
 
 

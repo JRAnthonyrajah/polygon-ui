@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QWidget
 
 class Breakpoint(Enum):
     """Responsive breakpoints following mobile-first design."""
+
     BASE = "base"
     SM = "sm"
     MD = "md"
@@ -78,7 +79,13 @@ class BreakpointSystem:
         Returns:
             True if bp1 >= bp2
         """
-        bp_order = [Breakpoint.BASE, Breakpoint.SM, Breakpoint.MD, Breakpoint.LG, Breakpoint.XL]
+        bp_order = [
+            Breakpoint.BASE,
+            Breakpoint.SM,
+            Breakpoint.MD,
+            Breakpoint.LG,
+            Breakpoint.XL,
+        ]
         return bp_order.index(bp1) >= bp_order.index(bp2)
 
     @classmethod
@@ -93,7 +100,13 @@ class BreakpointSystem:
         Returns:
             True if bp1 <= bp2
         """
-        bp_order = [Breakpoint.BASE, Breakpoint.SM, Breakpoint.MD, Breakpoint.LG, Breakpoint.XL]
+        bp_order = [
+            Breakpoint.BASE,
+            Breakpoint.SM,
+            Breakpoint.MD,
+            Breakpoint.LG,
+            Breakpoint.XL,
+        ]
         return bp_order.index(bp1) <= bp_order.index(bp2)
 
 
@@ -163,14 +176,26 @@ class ResponsiveProps:
         # Find the best matching breakpoint value
         # Start with the exact match or closest smaller breakpoint
         result = None
-        for bp in [Breakpoint.XL, Breakpoint.LG, Breakpoint.MD, Breakpoint.SM, Breakpoint.BASE]:
+        for bp in [
+            Breakpoint.XL,
+            Breakpoint.LG,
+            Breakpoint.MD,
+            Breakpoint.SM,
+            Breakpoint.BASE,
+        ]:
             if bp in value and BreakpointSystem.breakpoint_le(bp, current_bp):
                 result = value[bp]
                 break
 
         # If no smaller breakpoint found, use the smallest available
         if result is None:
-            bp_order = [Breakpoint.BASE, Breakpoint.SM, Breakpoint.MD, Breakpoint.LG, Breakpoint.XL]
+            bp_order = [
+                Breakpoint.BASE,
+                Breakpoint.SM,
+                Breakpoint.MD,
+                Breakpoint.LG,
+                Breakpoint.XL,
+            ]
             for bp in bp_order:
                 if bp in value:
                     result = value[bp]
@@ -210,7 +235,9 @@ class ResponsiveMixin(QObject):
 
     def __init__(self):
         super().__init__()
-        self._responsive_props = ResponsiveProps(self) if isinstance(self, QWidget) else None
+        self._responsive_props = (
+            ResponsiveProps(self) if isinstance(self, QWidget) else None
+        )
         self._current_breakpoint: Optional[Breakpoint] = None
         self._resize_timer = QTimer()
         self._resize_timer.setSingleShot(True)
@@ -219,7 +246,9 @@ class ResponsiveMixin(QObject):
         # Callback registry for breakpoint changes
         self._breakpoint_callbacks: List[Callable[[Breakpoint], None]] = []
 
-    def set_responsive_prop(self, prop_name: str, value: Union[Any, Dict[str, Any]]) -> None:
+    def set_responsive_prop(
+        self, prop_name: str, value: Union[Any, Dict[str, Any]]
+    ) -> None:
         """
         Set a responsive property that can vary by breakpoint.
 
@@ -254,7 +283,9 @@ class ResponsiveMixin(QObject):
         """
         self._breakpoint_callbacks.append(callback)
 
-    def remove_breakpoint_callback(self, callback: Callable[[Breakpoint], None]) -> None:
+    def remove_breakpoint_callback(
+        self, callback: Callable[[Breakpoint], None]
+    ) -> None:
         """
         Remove a breakpoint callback.
 
@@ -303,7 +334,7 @@ class ResponsiveMixin(QObject):
 
     def resizeEvent(self, event) -> None:
         """Handle resize events with debounced breakpoint checking."""
-        super().resizeEvent(event) if hasattr(super(), 'resizeEvent') else None
+        super().resizeEvent(event) if hasattr(super(), "resizeEvent") else None
 
         # Debounce resize events to avoid excessive recalculations
         self._resize_timer.start(100)  # 100ms debounce

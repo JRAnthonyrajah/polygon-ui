@@ -12,13 +12,21 @@ from .theme import Theme, ThemeProvider, Colors, Spacing, Typography
 from .styles import StyleProps, StylesAPI, QSSGenerator
 from .utils import css_var_to_qss, generate_color_shades, VariantSystem
 from .polybook import PolyBookApp, ComponentRegistry, Story, StoryManager
+
 # Layout system
 try:
     from .layout.core import (
-        LayoutComponent, GridComponent, UtilityComponent,
-        Breakpoint, BreakpointSystem, ResponsiveProps,
-        responsive, cols, spacing
+        LayoutComponent,
+        GridComponent,
+        UtilityComponent,
+        Breakpoint,
+        BreakpointSystem,
+        ResponsiveProps,
+        responsive,
+        cols,
+        spacing,
     )
+
     _layout_core_available = True
 except ImportError:
     # Layout core not available
@@ -55,12 +63,20 @@ __all__ = [
 
 # Add layout components to exports if available
 if _layout_core_available:
-    __all__.extend([
-        # Layout Core
-        "LayoutComponent", "GridComponent", "UtilityComponent",
-        "Breakpoint", "BreakpointSystem", "ResponsiveProps",
-        "responsive", "cols", "spacing"
-    ])
+    __all__.extend(
+        [
+            # Layout Core
+            "LayoutComponent",
+            "GridComponent",
+            "UtilityComponent",
+            "Breakpoint",
+            "BreakpointSystem",
+            "ResponsiveProps",
+            "responsive",
+            "cols",
+            "spacing",
+        ]
+    )
 
 
 def hello():

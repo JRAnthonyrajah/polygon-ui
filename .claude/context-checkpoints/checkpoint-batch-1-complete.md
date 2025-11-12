@@ -1,72 +1,87 @@
-# Polygon UI - PolyBook Visual Enhancement - Batch 1 Complete
+# Project Context: Polygon UI Layout System
+
+**Project**: polygon-ui
+**Branch**: feat/layout-system-polygon-ui
+**Workflow Goal**: Implement comprehensive layout system for Qt/PySide applications with full Mantine parity
+**Current Phase**: Initialization
+**Status**: Starting workflow
+**Timestamp**: 2025-11-13T00:00:00Z
 
 ## Project Overview
-**Project**: polygon-ui
-**Branch**: feat/polybook-visual-enhancement
-**Session**: 2025-11-12-2101
-**Batch**: 1 - Foundation & Critical Bug Fixes (Tasks 1.1-3.2)
-**Completed**: 2025-11-12 21:10
 
-## Batch Summary
-**Batch**: Tasks #1.1-#3.2 (Critical Foundation & Theme System)
-**Status**: ✅ All Complete
+Polygon UI is a library/framework of UI components for Qt/PySide, similar to Mantine for web applications. This workflow focuses on implementing the complete layout system as Phase 1 of the overall component library development.
 
-### Tasks Completed:
-1. ✅ 1.1 Fix hardcoded black text visibility in component titles
-2. ✅ 1.2 Fix hardcoded black text in Components header label
-3. ✅ 1.3 Replace all hardcoded QSS with theme-aware styling
-4. ✅ 1.4 Fix QSSGenerator integration in PolygonProvider
-5. ✅ 2.1 Extend color palette with additional colors (15+ colors)
-6. ✅ 2.2 Implement design token validation system
-7. ✅ 2.3 Enhance QSSGenerator with component state support
-8. ✅ 2.4 Add theme persistence and user preferences
-9. ✅ 3.1 Create theme system unit tests
-10. ✅ 3.2 Create visual regression tests for theme switching
+## Current Implementation Status
 
-## Key Accomplishments
-- **Critical Text Visibility Bugs Fixed**: All hardcoded colors eliminated, full theme compatibility
-- **Complete Theme System**: 15+ color families with 10 shades each, WCAG AA compliance
-- **Enhanced QSSGenerator**: Component state support (hover, focus, disabled, active)
-- **Theme Persistence**: User preferences saved and restored
-- **Comprehensive Testing**: 20 unit and visual regression tests
+### ✅ Completed Infrastructure
+- Theme system with light/dark mode support
+- Style props and StylesAPI infrastructure
+- Base component class (PolygonComponent)
+- Color system with 10-shade palettes
+- Typography, spacing, and design tokens
+- CSS variable generation and QSS integration
+- PolyBook utility for component development
 
-## Files Modified
-- **src/polygon_ui/polybook/app.py**: Removed hardcoded styling, integrated theme system
-- **src/polygon_ui/core/provider.py**: Fixed QSSGenerator integration, added persistence
-- **src/polygon_ui/theme/colors.py**: Extended palette with 15+ color families
-- **src/polygon_ui/theme/theme.py**: Added design token validation
-- **src/polygon_ui/styles/qss_generator.py**: Enhanced with component state support
-- **src/polygon_ui/settings/config.toml**: Added theme preference settings
-- **tests/test_theme.py**: Comprehensive theme system unit tests
-- **tests/test_polybook_theme.py**: PolyBook-specific theme tests
+### ❌ Missing Components
+- ZERO actual UI components implemented
+- Empty src/polygon_ui/components/ directory
+- No layout system components
 
-## Progress Update
-**Phase**: Implementation - Batch 1 Complete
-**Tasks Completed**: 10/32 (31.3%)
-**Critical Foundation**: ✅ Complete
-**Theme System**: ✅ Complete
-**Testing Infrastructure**: ✅ Complete
+## Layout System Requirements
 
-## Commit
-- **Hash**: bf73577
-- **Message**: feat(polybook): complete foundation and theme system batch
-- **Files**: 19 files changed, 1592 insertions, 2904 deletions
+### Core Layout Components (Priority: CRITICAL)
+1. Container - Centered content with horizontal padding and max-width
+2. Stack - Vertical layout with configurable spacing
+3. Group - Horizontal layout with configurable spacing
+4. Flex - Advanced flexbox layout (both horizontal and vertical)
+5. Box - Enhanced QWidget with style props support
 
-## Next Batch Preview
-Remaining tasks focus on Component Preview System Development:
-- Task 4.1: Create real component rendering system
-- Task 4.2: Implement interactive props configuration
-- Task 4.3: Add component state switching in preview
-- Task 4.4: Create component example management system
-- Task 4.5: Implement live preview updates
+### Grid System Components (Priority: CRITICAL)
+6. Grid - Advanced grid with spans, offsets, ordering
+7. SimpleGrid - Equal-sized columns with responsive breakpoints
+8. Col - Grid column component (used within Grid)
 
-## Impact
-The PolyBook application now has:
-- ✅ Full text visibility in both light and dark themes
-- ✅ Professional theme system with extensive color palette
-- ✅ Theme persistence across sessions
-- ✅ Component state support (hover, focus, disabled)
-- ✅ Comprehensive test coverage
-- ✅ WCAG AA accessibility compliance
+### Utility Layout Components (Priority: HIGH)
+9. Center - Perfect centering (horizontal and vertical)
+10. AspectRatio - Maintain specific width-to-height ratios
+11. Paper - Visual grouping with shadows/borders
+12. Divider - Visual separation lines
+13. Space - Flexible spacing component
 
-The critical foundation is complete and ready for the component preview system development phase.
+### Advanced Layout Components (Priority: MEDIUM)
+14. Accordion - Collapsible sections layout
+15. Tabs - Tab-based content switching
+16. Stepper - Multi-step process layout
+17. Timeline - Vertical timeline layout
+18. TimelineItem - Individual timeline items
+
+## Technical Requirements
+
+- Qt Layout Integration: Leverage Qt's layout management (QVBoxLayout, QHBoxLayout, QGridLayout, QStackedLayout)
+- Responsive Design: Breakpoint-based responsive design
+- Style Props Integration: Full style props support (p, m, gap, justify, align)
+- Theme System Integration: Use existing PolygonProvider and theme infrastructure
+- Qt-Specific Challenges: Convert CSS flexbox/grid to Qt layouts, handle widget hierarchy
+
+## Integration Points
+
+- Base Classes: All components inherit from existing PolygonComponent
+- Theme Integration: Leverage existing theme system with light/dark mode
+- Style Props: Use existing StyleProps and StylesAPI infrastructure
+- QSS Generation: Integrate with existing QSSGenerator for styling
+- Provider Pattern: Access theme via PolygonProvider singleton
+
+## Next Steps
+
+1. Create formal PRD with detailed requirements
+2. Decompose into actionable tasks
+3. Begin implementation of layout components
+4. Create PolyBook stories for testing and development
+
+## Success Metrics
+
+- 18 layout components fully implemented and tested
+- Layout rendering <50ms for complex nested structures
+- 100% theme-aware with instant color scheme switching
+- Intuitive Python API matching Mantine patterns
+- Complete component API documentation with examples

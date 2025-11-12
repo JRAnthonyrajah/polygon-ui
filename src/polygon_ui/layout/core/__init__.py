@@ -13,7 +13,7 @@ from .responsive import (
     ResponsiveMixin,
     responsive,
     cols,
-    spacing
+    spacing,
 )
 
 __all__ = [

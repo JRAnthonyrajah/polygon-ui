@@ -1,497 +1,554 @@
 # TASKS.md
 
-## Project: PolyBook Visual Enhancement
-**Branch**: feat/polybook-visual-enhancement
+## Project: Comprehensive Layout System
+**Branch**: feat/layout-system
 **PRD**: .claude/workflow/PRD.md
-**Started**: 2025-11-12
+**Started**: 2025-11-13
 
 ## Progress Overview
-- **Total Tasks**: 32
-- **Completed**: 24/32
+- **Total Tasks**: 87
+- **Completed**: 11/87
 - **In Progress**: 0
 - **Blocked**: 0
 
 ---
 
-## Phase 1: Foundation & Critical Bug Fixes (Weeks 1-2)
+## Phase 1: Foundation & Infrastructure (Weeks 1-2)
 
-### Critical Bug Fixes
-- [x] 1.1 Fix hardcoded black text visibility in component titles
-  - **Description**: Replace hardcoded color #212529 in component_title QLabel with theme-aware colors using PolygonProvider
-  - **Files**: src/polygon_ui/polybook/app.py (lines 237-248)
-  - **Dependencies**: None
-  - **Priority**: Critical
-  - **Complexity**: Low
-  - **Acceptance Criteria**: Text visible in both light and dark themes with proper contrast ratios
+### Project Structure & Setup
+- [x] Create layout system directory structure under `src/polygon_ui/layout/`
+- [x] Set up layout module initialization files
+- [x] Configure imports and exports in main package `__init__.py`
+- [x] Create layout-specific test directory structure
+- [x] Set up documentation template for layout components
 
-- [x] 1.2 Fix hardcoded black text in Components header label
-  - **Description**: Replace hardcoded colors in components_header QLabel with theme-aware styling system
-  - **Files**: src/polygon_ui/polybook/app.py (lines 91-104, 500-520)
-  - **Dependencies**: None
-  - **Priority**: Critical
-  - **Complexity**: Low
-  - **Acceptance Criteria**: Components label visible in all themes with proper contrast
+### Base Architecture Implementation
+- [x] **Create LayoutComponent base class** (Priority: CRITICAL)
+  - [x] Implement inheritance from PolygonComponent
+  - [x] Add Qt layout management integration
+  - [x] Create child widget management system
+  - [x] Implement responsive props storage
+  - [x] Add layout calculation methods
+- [x] **Create GridComponent base class** (Priority: CRITICAL)
+  - [x] Extend LayoutComponent for grid-specific functionality
+  - [x] Implement grid layout management
+  - [x] Add span and offset support
+  - [x] Create responsive grid behavior
+- [x] **Create UtilityComponent base class** (Priority: HIGH)
+  - [x] Extend LayoutComponent for utility components
+  - [x] Implement simplified layout behavior
+  - [x] Add style props integration
 
-- [x] 1.3 Replace all hardcoded QSS with theme-aware styling
-  - **Description**: Systematically replace hardcoded stylesheets throughout app.py with calls to QSSGenerator
-  - **Files**: src/polygon_ui/polybook/app.py (multiple hardcoded stylesheets)
-  - **Dependencies**: 1.1, 1.2
-  - **Priority**: Critical
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Zero hardcoded colors remain in production code
+### Responsive Design System
+- [x] **Implement breakpoint system** (Priority: CRITICAL)
+  - [x] Define breakpoint constants (base, sm, md, lg, xl)
+  - [x] Create breakpoint detection utilities
+  - [x] Implement responsive value resolution
+  - [x] Add window resize monitoring
+  - [x] Create responsive prop type definitions
+- [x] **Create responsive props handling** (Priority: CRITICAL)
+  - [x] Implement responsive prop parsing
+  - [x] Create breakpoint-specific value application
+  - [x] Add responsive prop validation
+  - [x] Create responsive prop TypeScript-style type hints
 
-- [x] 1.4 Fix QSSGenerator integration in PolygonProvider
-  - **Description**: Ensure QSSGenerator.generate_theme_qss() properly applies theme to entire application
-  - **Files**: src/polygon_ui/core/provider.py (lines 98-102)
-  - **Dependencies**: None
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Theme switching works seamlessly across entire application
+### Style Props Integration
+- [x] **Extend StyleProps for layouts** (Priority: HIGH)
+  - [x] Add layout-specific style props (gap, justify, align, direction)
+  - [x] Implement grid style props (columns, gutter)
+  - [x] Create responsive style props support
+  - [x] Add layout QSS generation utilities
+- [ ] **Create QSS generation for layouts** (Priority: HIGH)
+  - [ ] Implement flexbox QSS generation
+  - [ ] Create grid QSS generation
+  - [ ] Add responsive QSS updates
+  - [ ] Optimize QSS generation performance
 
-### Theme System Enhancement
-- [x] 2.1 Extend color palette with additional colors (15+ colors)
-  - **Description**: Add orange, pink, indigo, teal, cyan, lime, amber, rose colors to enhance design system
-  - **Files**: src/polygon_ui/theme/colors.py
-  - **Dependencies**: None
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: 15+ color families with 10 shades each
-
-- [ ] 2.2 Implement design token validation system
-  - **Description**: Add validation for color contrast ratios, accessibility compliance, and token consistency
-  - **Files**: src/polygon_ui/theme/design_tokens.py (new file)
-  - **Dependencies**: 2.1
-  - **Priority**: Medium
-  - **Complexity**: High
-  - **Acceptance Criteria**: WCAG AA compliance for all color combinations
-
-- [ ] 2.3 Enhance QSSGenerator with component state support
-  - **Description**: Extend QSSGenerator to handle hover, pressed, disabled, focus states for all Qt widgets
-  - **Files**: src/polygon_ui/styles/qss_generator.py (lines 416-453)
-  - **Dependencies**: 1.4
-  - **Priority**: High
-  - **Complexity**: High
-  - **Acceptance Criteria**: All component states properly themed across light/dark modes
-
-- [x] 2.4 Add theme persistence and user preferences
-  - **Description**: Save theme preferences (color scheme, primary color) to configuration file
-  - **Files**: src/polygon_ui/polybook/app.py, src/polygon_ui/settings/config.toml
-  - **Dependencies**: 1.4
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: User theme choices persist across application restarts
-
-### Foundation Testing
-- [ ] 3.1 Create theme system unit tests
-  - **Description**: Write comprehensive tests for Theme class, Colors, QSSGenerator, and design tokens
-  - **Files**: tests/test_theme_system.py (new file)
-  - **Dependencies**: 2.1, 2.2, 2.3
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: 95%+ code coverage for theme system components
-
-- [ ] 3.2 Create visual regression tests for theme switching
-  - **Description**: Automated tests to verify theme switching doesn't break visual consistency
-  - **Files**: tests/test_visual_regression.py (new file)
-  - **Dependencies**: 3.1
-  - **Priority**: Medium
-  - **Complexity**: High
-  - **Acceptance Criteria**: All theme changes pass visual validation
+### Testing Infrastructure
+- [ ] **Set up layout testing framework** (Priority: MEDIUM)
+  - [ ] Create layout-specific test utilities
+  - [ ] Set up Qt widget testing helpers
+  - [ ] Create responsive behavior testing tools
+  - [ ] Add visual regression testing setup
+- [ ] **Create performance testing framework** (Priority: MEDIUM)
+  - [ ] Implement layout calculation benchmarks
+  - [ ] Create memory usage profiling
+  - [ ] Add rendering performance tests
+  - [ ] Set up performance regression detection
 
 ---
 
-## Phase 2: Component Preview System Development (Weeks 3-4)
+## Phase 2: Core Layout Components (Weeks 3-4)
 
-### Component Rendering Engine
-- [x] 4.1 Create ComponentRenderer class for real component instantiation
-  - **Description**: Build system to create actual Qt component instances from component registry
-  - **Files**: src/polygon_ui/polybook/preview/renderer.py (new file)
-  - **Dependencies**: None
-  - **Priority**: Critical
-  - **Complexity**: High
-  - **Acceptance Criteria**: Real components render instead of placeholders
+### Container Component
+- [ ] **Create Container component** (Priority: CRITICAL)
+  - [ ] Implement basic Container structure inheriting LayoutComponent
+  - [ ] Add size prop support (xs, sm, md, lg, xl)
+  - [ ] Implement fluid prop behavior
+  - [ ] Add horizontal padding (px) and vertical padding (py)
+  - [ ] Create centering functionality
+- [ ] **Container responsive behavior** (Priority: HIGH)
+  - [ ] Implement breakpoint-based max-width
+  - [ ] Add responsive padding support
+  - [ ] Create fluid behavior toggle
+- [ ] **Container testing** (Priority: HIGH)
+  - [ ] Write unit tests for all props
+  - [ ] Create responsive behavior tests
+  - [ ] Add visual regression tests
+  - [ ] Implement performance benchmarks
 
-- [x] 4.2 Implement props-based component configuration system
-  - **Description**: Create system to apply story props to component instances dynamically
-  - **Files**: src/polygon_ui/polybook/preview/props_panel.py (new file)
-  - **Dependencies**: 4.1
-  - **Priority**: Critical
-  - **Complexity**: High
-  - **Acceptance Criteria**: Component appearance changes instantly when props are modified
+### Stack Component
+- [ ] **Create Stack component** (Priority: CRITICAL)
+  - [ ] Implement basic Stack structure with QVBoxLayout
+  - [ ] Add gap prop support with theme integration
+  - [ ] Implement align prop (start, center, end, stretch)
+  - [ ] Add justify prop functionality
+  - [ ] Create direction prop for horizontal variant
+- [ ] **Stack advanced features** (Priority: HIGH)
+  - [ ] Implement responsive gap configuration
+  - [ ] Add horizontal layout with QHBoxLayout
+  - [ ] Create dynamic direction switching
+  - [ ] Add child widget sizing support
+- [ ] **Stack testing** (Priority: HIGH)
+  - [ ] Write comprehensive unit tests
+  - [ ] Test responsive gap behavior
+  - [ ] Create nested layout scenarios
+  - [ ] Add performance tests for large stacks
 
-- [x] 4.3 Add interactive component state management
-  - **Description**: Handle user interactions (clicks, input) within previewed components
-  - **Files**: src/polygon_ui/polybook/preview/component_widget.py (new file)
-  - **Dependencies**: 4.1, 4.2
-  - **Priority**: High
-  - **Complexity**: High
-  - **Acceptance Criteria**: Interactive components respond to user interaction in preview
+### Group Component
+- [ ] **Create Group component** (Priority: CRITICAL)
+  - [ ] Implement Group structure with QHBoxLayout
+  - [ ] Add gap prop support
+  - [ ] Implement align prop functionality
+  - [ ] Add justify prop support
+  - [ ] Create wrap behavior
+- [ ] **Group responsive features** (Priority: HIGH)
+  - [ ] Implement responsive gap behavior
+  - [ ] Add responsive wrapping
+  - [ ] Create overflow handling
+  - [ ] Add automatic child sizing
+- [ ] **Group testing** (Priority: HIGH)
+  - [ ] Write unit tests for all configurations
+  - [ ] Test wrapping behavior
+  - [ ] Create overflow scenario tests
+  - [ ] Add performance benchmarks
 
-- [ ] 4.4 Implement error handling for component failures
-  - **Description**: Create graceful error display when components fail to render or have invalid props
-  - **Files**: src/polygon_ui/polybook/preview/error_boundary.py (new file)
-  - **Dependencies**: 4.1
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Helpful error information displayed instead of crashes
+### Flex Component
+- [ ] **Create Flex component** (Priority: CRITICAL)
+  - [ ] Implement custom flex layout using QWidget.resize()
+  - [ ] Add direction prop support
+  - [ ] Implement wrap behavior
+  - [ ] Add justify prop functionality
+  - [ ] Create align prop support
+- [ ] **Flex advanced properties** (Priority: HIGH)
+  - [ ] Implement grow and shrink for children
+  - [ ] Add order property support
+  - [ ] Create flex basis handling
+  - [ ] Add gap prop integration
+- [ ] **Flex testing** (Priority: HIGH)
+  - [ ] Write comprehensive flex behavior tests
+  - [ ] Test complex flex scenarios
+  - [ ] Create performance benchmarks
+  - [ ] Add visual regression tests
 
-### Preview Interface Enhancement
-- [ ] 5.1 Replace placeholder rendering with real component preview
-  - **Description**: Modify render_component_placeholder() to use ComponentRenderer
-  - **Files**: src/polygon_ui/polybook/app.py (lines 813-839)
-  - **Dependencies**: 4.1
-  - **Priority**: Critical
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Actual components display in preview panel
-
-- [ ] 5.2 Enhance props editor with live updates
-  - **Description**: Connect props editor widgets to live component preview updates
-  - **Files**: src/polygon_ui/polybook/app.py (lines 760-811)
-  - **Dependencies**: 4.2, 5.1
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Preview updates in real-time as props change
-
-- [ ] 5.3 Add component resizing and responsive behavior
-  - **Description**: Allow preview area to be resized and components to adapt responsively
-  - **Files**: src/polygon_ui/polybook/app.py (create_center_panel method)
-  - **Dependencies**: 5.1
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Components adapt properly to preview area size changes
-
-- [ ] 5.4 Implement performance optimization for complex components
-  - **Description**: Add lazy loading and caching for component rendering to ensure <500ms response times
-  - **Files**: src/polygon_ui/polybook/preview/renderer.py
-  - **Dependencies**: 4.1
-  - **Priority**: Medium
-  - **Complexity**: High
-  - **Acceptance Criteria**: Complex components render within performance requirements
-
-### Component Registry Integration
-- [ ] 6.1 Register actual Polygon UI components instead of placeholders
-  - **Description**: Update add_example_components() to register real button, input, and other UI components
-  - **Files**: src/polygon_ui/polybook/app.py (lines 628-659), existing component files
-  - **Dependencies**: 5.1
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Real Polygon UI components available in component list
-
-- [ ] 6.2 Create comprehensive component examples and stories
-  - **Description**: Add detailed examples showcasing all component variants and configurations
-  - **Files**: Component definition files, story definitions
-  - **Dependencies**: 6.1
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Each component has multiple practical examples
-
-### Preview System Testing
-- [ ] 7.1 Create component preview unit tests
-  - **Description**: Test ComponentRenderer, props configuration, and error handling
-  - **Files**: tests/test_component_preview.py (new file)
-  - **Dependencies**: 4.1, 4.2, 4.3
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: 90%+ coverage for preview system
-
-- [ ] 7.2 Create integration tests for component workflow
-  - **Description**: End-to-end tests for component selection, prop editing, and preview updates
-  - **Files**: tests/test_polybook_integration.py (new file)
-  - **Dependencies**: 7.1
-  - **Priority**: Medium
-  - **Complexity**: High
-  - **Acceptance Criteria**: Complete user workflow tested and validated
+### Box Component
+- [ ] **Create Box component** (Priority: HIGH)
+  - [ ] Extend QWidget with StyleProps integration
+  - [ ] Add all style props support (m, p, bg, color, etc.)
+  - [ ] Implement layout properties (flex, grid)
+  - [ ] Create event handling integration
+- [ ] **Box advanced features** (Priority: MEDIUM)
+  - [ ] Add responsive style props
+  - [ ] Create layout property shortcuts
+  - [ ] Implement component composition support
+- [ ] **Box testing** (Priority: MEDIUM)
+  - [ ] Write style props integration tests
+  - [ ] Test layout property behavior
+  - [ ] Create visual tests
 
 ---
 
-## Phase 3: Visual Polish & Professional Enhancement (Weeks 5-6)
+## Phase 3: Grid System Components (Weeks 5-6)
 
-### Professional Visual Design
-- [ ] 8.1 Implement professional icon system
-  - **Description**: Integrate Feather Icons or similar professional icon set throughout application
-  - **Files**: src/polygon_ui/polybook/assets/icons/ (new directory)
-  - **Dependencies**: None
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Professional icons for all UI elements and actions
+### Grid Component
+- [ ] **Create Grid component** (Priority: CRITICAL)
+  - [ ] Implement Grid structure with QGridLayout
+  - [ ] Add columns prop support
+  - [ ] Implement gutter spacing
+  - [ ] Add justify prop functionality
+  - [ ] Create align prop support
+- [ ] **Grid advanced features** (Priority: HIGH)
+  - [ ] Implement responsive column behavior
+  - [ ] Add Col children integration
+  - [ ] Create auto-fit and auto-fill support
+  - [ ] Add nested grid handling
+- [ ] **Grid testing** (Priority: HIGH)
+  - [ ] Write comprehensive grid tests
+  - [ ] Test responsive column behavior
+  - [ ] Create complex grid scenarios
+  - [ ] Add performance benchmarks
 
-- [ ] 8.2 Add smooth theme transitions and animations
-  - **Description**: Implement 300ms smooth transitions for theme switching and UI state changes
-  - **Files**: src/polygon_ui/styles/qss_generator.py, src/polygon_ui/polybook/app.py
-  - **Dependencies**: 2.3
-  - **Priority**: High
-  - **Complexity**: High
-  - **Acceptance Criteria**: Smooth transitions without visual artifacts
+### SimpleGrid Component
+- [ ] **Create SimpleGrid component** (Priority: CRITICAL)
+  - [ ] Implement equal-sized columns with QGridLayout
+  - [ ] Add cols prop support (responsive object)
+  - [ ] Implement spacing prop
+  - [ ] Create mobile-first responsive design
+- [ ] **SimpleGrid responsive behavior** (Priority: HIGH)
+  - [ ] Implement breakpoint-based column changes
+  - [ ] Add responsive spacing support
+  - [ ] Create smooth breakpoint transitions
+  - [ ] Add auto-sizing behavior
+- [ ] **SimpleGrid testing** (Priority: HIGH)
+  - [ ] Write responsive behavior tests
+  - [ ] Test column distribution
+  - [ ] Create performance benchmarks
+  - [ ] Add visual regression tests
 
-- [ ] 8.3 Enhance typography hierarchy and consistency
-  - **Description**: Implement comprehensive typography system with consistent sizing, weights, and spacing
-  - **Files**: src/polygon_ui/theme/typography.py, src/polygon_ui/styles/qss_generator.py
-  - **Dependencies**: 2.1
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Professional typography throughout application
+### Col Component
+- [ ] **Create Col component** (Priority: CRITICAL)
+  - [ ] Implement Col structure for Grid parent
+  - [ ] Add span prop support
+  - [ ] Implement offset functionality
+  - [ ] Add order prop support
+  - [ ] Create pull and push features
+- [ ] **Col advanced features** (Priority: HIGH)
+  - [ ] Implement responsive span behavior
+  - [ ] Add responsive offset support
+  - [ ] Create conditional rendering
+  - [ ] Add size-based visibility
+- [ ] **Col testing** (Priority: HIGH)
+  - [ ] Write comprehensive Col tests
+  - [ ] Test span and offset behavior
+  - [ ] Create responsive scenario tests
+  - [ ] Add grid integration tests
 
-- [ ] 8.4 Add loading states and skeleton screens
-  - **Description**: Implement professional loading indicators and skeleton screens for better UX
-  - **Files**: src/polygon_ui/polybook/widgets/loading.py (new file)
-  - **Dependencies**: None
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Loading states for all async operations
-
-### UI/UX Enhancement
-- [ ] 9.1 Implement keyboard shortcuts and navigation
-  - **Description**: Add keyboard shortcuts for common actions (theme toggle, component search, navigation)
-  - **Files**: src/polygon_ui/polybook/app.py (add keyboard event handling)
-  - **Dependencies**: None
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Full keyboard accessibility with intuitive shortcuts
-
-- [ ] 9.2 Add panel resizing with persistence
-  - **Description**: Make all three panels resizable with size persistence across sessions
-  - **Files**: src/polygon_ui/polybook/app.py (splitter configuration)
-  - **Dependencies**: 2.4
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: User-preferred panel sizes remembered
-
-- [ ] 9.3 Enhance component search and filtering
-  - **Description**: Improve search with category filtering, tag support, and fuzzy matching
-  - **Files**: src/polygon_ui/polybook/app.py (on_search_components method)
-  - **Dependencies**: 6.1
-  - **Priority**: Low
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Advanced search with multiple filter options
-
-- [ ] 9.4 Add export/share functionality
-  - **Description**: Allow users to export component configurations and share them
-  - **Files**: src/polygon_ui/polybook/export/exporter.py (new file)
-  - **Dependencies**: 5.2
-  - **Priority**: Low
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Component configurations can be exported and imported
-
-### Accessibility Enhancement
-- [ ] 10.1 Implement comprehensive accessibility support
-  - **Description**: Add ARIA labels, focus management, and screen reader support
-  - **Files**: src/polygon_ui/polybook/app.py, component files
-  - **Dependencies**: 9.1
-  - **Priority**: High
-  - **Complexity**: High
-  - **Acceptance Criteria**: WCAG AA compliance for accessibility
-
-- [ ] 10.2 Add high contrast theme support
-  - **Description**: Implement high contrast theme variant for accessibility
-  - **Files**: src/polygon_ui/theme/colors.py, src/polygon_ui/theme/theme.py
-  - **Dependencies**: 2.1
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: High contrast theme meets accessibility standards
-
-### Final Integration Testing
-- [ ] 11.1 Cross-platform compatibility testing
-  - **Description**: Test application on Windows, macOS, and Linux for consistency
-  - **Files**: All application files
-  - **Dependencies**: All previous tasks
-  - **Priority**: High
-  - **Complexity**: High
-  - **Acceptance Criteria**: Consistent behavior across all supported platforms
-
-- [ ] 11.2 Performance benchmarking and optimization
-  - **Description**: Measure and optimize application startup, theme switching, and component rendering times
-  - **Files**: All performance-critical files
-  - **Dependencies**: All previous tasks
-  - **Priority**: High
-  - **Complexity**: High
-  - **Acceptance Criteria**: All performance requirements met (startup <2s, theme switch <300ms)
-
-- [ ] 11.3 Comprehensive user acceptance testing
-  - **Description**: End-to-end testing of complete user workflows and edge cases
-  - **Files**: Complete application
-  - **Dependencies**: All previous tasks
-  - **Priority**: Critical
-  - **Complexity**: High
-  - **Acceptance Criteria**: All acceptance criteria from PRD met
+### Grid System Integration
+- [ ] **Grid system integration testing** (Priority: HIGH)
+  - [ ] Create complex grid layout scenarios
+  - [ ] Test nested grid behavior
+  - [ ] Add responsive grid integration tests
+  - [ ] Create performance tests for large grids
+- [ ] **Grid system documentation** (Priority: MEDIUM)
+  - [ ] Write grid system usage examples
+  - [ ] Create best practices guide
+  - [ ] Add migration guide from native QGridLayout
 
 ---
 
-## Phase 4: Documentation & Deployment Preparation
+## Phase 4: Utility Layout Components (Weeks 7-8)
 
-### Documentation
-- [ ] 12.1 Create theme usage documentation
-  - **Description**: Write comprehensive guide for using and customizing themes
-  - **Files**: docs/theme-usage.md (new file)
-  - **Dependencies**: 2.1, 2.2, 2.3
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Complete theme customization guide
+### Center Component
+- [ ] **Create Center component** (Priority: HIGH)
+  - [ ] Implement perfect centering (horizontal and vertical)
+  - [ ] Add inline prop for block vs inline-block behavior
+  - [ ] Create fluid positioning options
+  - [ ] Add max-width constraints
+- [ ] **Center advanced features** (Priority: MEDIUM)
+  - [ ] Implement responsive centering
+  - [ ] Add conditional centering behavior
+  - [ ] Create fallback positioning
+- [ ] **Center testing** (Priority: MEDIUM)
+  - [ ] Write centering behavior tests
+  - [ ] Test responsive behavior
+  - [ ] Create visual regression tests
 
-- [ ] 12.2 Update PolyBook API documentation
-  - **Description**: Document all PolyBook classes, methods, and usage patterns
-  - **Files**: docs/api/polybook.md (new file)
-  - **Dependencies**: 4.1, 4.2, 5.1
-  - **Priority**: Medium
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Complete API reference documentation
+### AspectRatio Component
+- [ ] **Create AspectRatio component** (Priority: HIGH)
+  - [ ] Implement aspect ratio maintenance
+  - [ ] Add ratio prop support (numeric and presets)
+  - [ ] Create child content preservation
+  - [ ] Add style prop support
+- [ ] **AspectRatio responsive behavior** (Priority: MEDIUM)
+  - [ ] Implement responsive ratio changes
+  - [ ] Add content scaling behavior
+  - [ ] Create overflow handling
+- [ ] **AspectRatio testing** (Priority: MEDIUM)
+  - [ ] Write ratio maintenance tests
+  - [ ] Test content preservation
+  - [ ] Create visual tests for different ratios
 
-### Code Quality
-- [ ] 13.1 Final code review and cleanup
-  - **Description**: Comprehensive code review, remove temporary code, optimize imports
-  - **Files**: All modified files
-  - **Dependencies**: All previous tasks
-  - **Priority**: High
-  - **Complexity**: Medium
-  - **Acceptance Criteria**: Code passes all quality checks and reviews
+### Paper Component
+- [ ] **Create Paper component** (Priority: HIGH)
+  - [ ] Implement visual grouping with shadows
+  - [ ] Add shadow prop with theme integration
+  - [ ] Implement border support with radius
+  - [ ] Create withBorder prop functionality
+- [ ] **Paper advanced features** (Priority: MEDIUM)
+  - [ ] Add theme-aware elevation
+  - [ ] Implement color scheme integration
+  - [ ] Create responsive shadow behavior
+- [ ] **Paper testing** (Priority: MEDIUM)
+  - [ ] Write shadow and border tests
+  - [ ] Test theme integration
+  - [ ] Create visual regression tests
 
-- [ ] 13.2 Update changelog and version information
-  - **Description**: Document all changes, update version numbers, prepare release notes
-  - **Files**: CHANGELOG.md, pyproject.toml, src/polygon_ui/__init__.py
-  - **Dependencies**: 13.1
-  - **Priority**: Medium
-  - **Complexity**: Low
-  - **Acceptance Criteria**: Comprehensive changelog and version bump
+### Divider Component
+- [ ] **Create Divider component** (Priority: HIGH)
+  - [ ] Implement visual separation lines
+  - [ ] Add orientation prop (horizontal/vertical)
+  - [ ] Implement size prop support
+  - [ ] Create color prop with theme integration
+  - [ ] Add label prop for text dividers
+- [ ] **Divider advanced features** (Priority: MEDIUM)
+  - [ ] Add custom styling support
+  - [ ] Implement accessibility integration
+  - [ ] Create responsive behavior
+- [ ] **Divider testing** (Priority: MEDIUM)
+  - [ ] Write orientation and style tests
+  - [ ] Test accessibility features
+  - [ ] Create visual regression tests
+
+### Space Component
+- [ ] **Create Space component** (Priority: HIGH)
+  - [ ] Implement flexible spacing
+  - [ ] Add height (h) prop support
+  - [ ] Create width (w) prop support
+  - [ ] Implement flex prop for grow/shrink behavior
+- [ ] **Space advanced features** (Priority: MEDIUM)
+  - [ ] Add responsive sizing support
+  - [ ] Implement negative space support
+  - [ ] Create conditional spacing
+- [ ] **Space testing** (Priority: MEDIUM)
+  - [ ] Write spacing behavior tests
+  - [ ] Test responsive sizing
+  - [ ] Create visual tests
 
 ---
 
-## Critical Path Dependencies
+## Phase 5: Advanced Layout Components (Weeks 9-10)
 
-### Mandatory Sequences
-1. **Critical Bug Fixes** (1.1, 1.2) must be completed before **Theme Enhancement** (2.x)
-2. **Theme System** (2.x) must be completed before **Component Preview** (4.x, 5.x) integration
-3. **Component Rendering** (4.1) must work before **Interactive Features** (4.2, 4.3) development
-4. **All Implementation** must be complete before **Final Testing** (11.x) and **Documentation** (12.x)
+### Accordion Component
+- [ ] **Create Accordion component** (Priority: MEDIUM)
+  - [ ] Implement collapsible sections layout
+  - [ ] Add multiple prop for multiple open sections
+  - [ ] Create defaultValue and value props
+  - [ ] Implement onChange callback
+- [ ] **Accordion advanced features** (Priority: MEDIUM)
+  - [ ] Add animation support
+  - [ ] Implement accessibility compliance
+  - [ ] Create custom section rendering
+  - [ ] Add keyboard navigation
+- [ ] **Accordion testing** (Priority: MEDIUM)
+  - [ ] Write collapse/expand behavior tests
+  - [ ] Test state management
+  - [ ] Create accessibility tests
+  - [ ] Add visual regression tests
 
-### Parallel Development Opportunities
-- **Visual Polish** (8.x) can begin once basic theming (2.x) is functional
-- **Testing** (3.x, 7.x, 11.x) can start as soon as individual components are complete
-- **Documentation** (12.x) can be written alongside development
-- **Accessibility** (10.x) can be developed in parallel with UI enhancements
+### Tabs Component
+- [ ] **Create Tabs component** (Priority: MEDIUM)
+  - [ ] Implement tab-based content switching
+  - [ ] Add defaultValue and value props
+  - [ ] Create onChange callback
+  - [ ] Implement orientation prop (horizontal/vertical)
+- [ ] **Tabs advanced features** (Priority: MEDIUM)
+  - [ ] Add animated transitions
+  - [ ] Implement keyboard navigation
+  - [ ] Create custom tab rendering
+  - [ ] Add tab positioning options
+- [ ] **Tabs testing** (Priority: MEDIUM)
+  - [ ] Write tab switching behavior tests
+  - [ ] Test keyboard navigation
+  - [ ] Create animation tests
+  - [ ] Add accessibility tests
 
-### Success Gates
+### Stepper Component
+- [ ] **Create Stepper component** (Priority: MEDIUM)
+  - [ ] Implement multi-step process layout
+  - [ ] Add active prop for current step
+  - [ ] Create onStepClick callback
+  - [ ] Implement allowStepClickSelect prop
+- [ ] **Stepper advanced features** (Priority: MEDIUM)
+  - [ ] Add progress indicators
+  - [ ] Create custom step rendering
+  - [ ] Implement step validation
+  - [ ] Add responsive behavior
+- [ ] **Stepper testing** (Priority: MEDIUM)
+  - [ ] Write step navigation tests
+  - [ ] Test progress indicators
+  - [ ] Create validation tests
+  - [ ] Add accessibility tests
 
-#### Phase 1 Gate (End of Week 2)
-- [ ] All text visibility issues resolved (1.1, 1.2)
-- [ ] Theme switching works without errors (1.3, 1.4)
-- [ ] Extended color palette implemented (2.1)
-- [ ] Code coverage >80% for theme system (3.1)
+### Timeline Component
+- [ ] **Create Timeline component** (Priority: MEDIUM)
+  - [ ] Implement vertical timeline layout
+  - [ ] Add active prop for highlighting
+  - [ ] Create bulletSize prop support
+  - [ ] Implement lineWidth prop
+  - [ ] Add align prop (left, right, alternate)
+- [ ] **Timeline advanced features** (Priority: MEDIUM)
+  - [ ] Add reverse direction support
+  - [ ] Create custom bullet rendering
+  - [ ] Implement responsive behavior
+  - [ ] Add animation support
+- [ ] **Timeline testing** (Priority: MEDIUM)
+  - [ ] Write timeline layout tests
+  - [ ] Test bullet customization
+  - [ ] Create visual regression tests
+  - [ ] Add accessibility tests
 
-#### Phase 2 Gate (End of Week 4)
-- [ ] All registered components render correctly (5.1, 6.1)
-- [ ] Real-time preview updates function (5.2)
-- [ ] Props configuration works without errors (4.2)
-- [ ] Performance meets requirements (<500ms rendering)
+### TimelineItem Component
+- [ ] **Create TimelineItem component** (Priority: MEDIUM)
+  - [ ] Implement individual timeline items
+  - [ ] Add active prop for item state
+  - [ ] Create bullet prop support
+  - [ ] Implement lineVariant prop
+  - [ ] Add title and label props
+- [ ] **TimelineItem advanced features** (Priority: MEDIUM)
+  - [ ] Add custom content areas
+  - [ ] Create status indicators
+  - [ ] Implement interaction handlers
+  - [ ] Add responsive behavior
+- [ ] **TimelineItem testing** (Priority: MEDIUM)
+  - [ ] Write item rendering tests
+  - [ ] Test status indicators
+  - [ ] Create interaction tests
+  - [ ] Add visual regression tests
 
-#### Phase 3 Gate (End of Week 6)
-- [ ] Professional visual design implemented (8.1, 8.2, 8.3)
-- [ ] All accessibility requirements met (10.1, 10.2)
-- [ ] Cross-platform consistency achieved (11.1)
-- [ ] Complete test coverage (>90%) (3.1, 7.1, 11.3)
+---
 
-#### Final Gate
-- [ ] All PRD acceptance criteria met
-- [ ] Performance benchmarks achieved (<2s startup, <300ms theme switch)
-- [ ] Complete documentation and code review
-- [ ] Ready for production deployment
+## Phase 6: Integration & Testing (Weeks 11-12)
+
+### Cross-Component Integration
+- [ ] **Component interaction testing** (Priority: HIGH)
+  - [ ] Create complex nested layout scenarios
+  - [ ] Test component composition patterns
+  - [ ] Add performance testing for large layouts
+  - [ ] Create memory leak tests
+- [ ] **Theme integration validation** (Priority: HIGH)
+  - [ ] Test theme switching with all components
+  - [ ] Validate spacing scale integration
+  - [ ] Test color scheme changes
+  - [ ] Add custom theme support tests
+- [ ] **Responsive system integration** (Priority: HIGH)
+  - [ ] Test responsive behavior across all components
+  - [ ] Validate breakpoint consistency
+  - [ ] Test window resize scenarios
+  - [ ] Add responsive prop validation
+
+### Performance Optimization
+- [ ] **Layout calculation optimization** (Priority: HIGH)
+  - [ ] Profile and optimize layout calculation algorithms
+  - [ ] Implement layout caching strategies
+  - [ ] Optimize QSS generation and application
+  - [ ] Add lazy loading for complex layouts
+- [ ] **Memory usage optimization** (Priority: HIGH)
+  - [ ] Profile memory usage patterns
+  - [ ] Implement widget pooling strategies
+  - [ ] Optimize event handler cleanup
+  - [ ] Add memory leak prevention
+- [ ] **Rendering performance optimization** (Priority: HIGH)
+  - [ ] Optimize redraw cycles
+  - [ ] Implement efficient update batching
+  - [ ] Add render performance monitoring
+  - [ ] Create performance benchmarks
+
+### Comprehensive Testing
+- [ ] **Unit test completion** (Priority: CRITICAL)
+  - [ ] Achieve 95%+ test coverage across all components
+  - [ ] Add edge case testing for all props
+  - [ ] Create parameterized tests for prop combinations
+  - [ ] Add error handling and exception tests
+- [ ] **Integration test suite** (Priority: HIGH)
+  - [ ] Create comprehensive integration tests
+  - [ ] Test complex layout scenarios
+  - [ ] Add theme switching integration tests
+  - [ ] Create performance integration tests
+- [ ] **Visual regression testing** (Priority: HIGH)
+  - [ ] Set up automated visual testing pipeline
+  - [ ] Create baseline screenshots for all components
+  - [ ] Add cross-platform visual validation
+  - [ ] Implement visual diff reporting
+- [ ] **Accessibility testing** (Priority: HIGH)
+  - [ ] Test WCAG 2.1 AA compliance
+  - [ ] Validate keyboard navigation
+  - [ ] Test screen reader compatibility
+  - [ ] Add focus management validation
+
+### Documentation & Examples
+- [ ] **API documentation** (Priority: HIGH)
+  - [ ] Write comprehensive docstrings for all components
+  - [ ] Create prop type documentation
+  - [ ] Add usage examples for all features
+  - [ ] Document responsive behavior patterns
+- [ ] **Usage guides** (Priority: MEDIUM)
+  - [ ] Create getting started guide
+  - [ ] Write best practices documentation
+  - [ ] Create migration guide from native Qt layouts
+  - [ ] Add performance optimization guide
+- [ ] **Examples and demos** (Priority: MEDIUM)
+  - [ ] Create interactive examples for all components
+  - [ ] Build complex layout showcase
+  - [ ] Add responsive design examples
+  - [ ] Create theme integration demos
+
+### Release Preparation
+- [ ] **Code quality validation** (Priority: CRITICAL)
+  - [ ] Pass all linting and type checking
+  - [ ] Complete code review for all components
+  - [ ] Validate 100% type hint coverage
+  - [ ] Ensure coding standards compliance
+- [ ] **Performance validation** (Priority: HIGH)
+  - [ ] Validate <100ms component initialization
+  - [ ] Ensure <16ms layout recalculation
+  - [ ] Verify memory usage requirements
+  - [ ] Complete performance benchmarking
+- [ ] **Release candidate preparation** (Priority: HIGH)
+  - [ ] Create release notes and changelog
+  - [ ] Prepare component showcase
+  - [ ] Finalize documentation
+  - [ ] Create migration tools and scripts
 
 ---
 
 ## Blocked Tasks
 
 ### High Priority
-- **Task Name**: None currently
-  - **Blocker**: TBD
-  - **ETA**: TBD
+- **Grid System Implementation**: Waiting on LayoutComponent base class completion
+  - **Blocker**: Foundation infrastructure must be complete
+  - **ETA**: Week 3
 
 ### Medium Priority
-- **Task Name**: None currently
-  - **Blocker**: TBD
-  - **ETA**: TBD
+- **Advanced Components**: Waiting on core components testing completion
+  - **Blocker**: Core patterns must be validated
+  - **ETA**: Week 9
 
 ---
 
 ## Notes & Decisions
 
 ### Key Implementation Decisions
-- **QSSGenerator Usage**: Leverage existing comprehensive QSSGenerator class rather than rebuilding
-- **Theme Integration**: Use PolygonProvider as central theme management system
-- **Component Rendering**: Build new ComponentRenderer class to handle real Qt component instantiation
-- **Error Handling**: Implement graceful error boundaries to prevent crashes during component development
+- **Qt Layout Integration**: Use hybrid approach combining native Qt layouts with custom positioning for CSS flexbox/grid parity
+- **Responsive Design**: Mobile-first breakpoint system matching Mantine's approach
+- **Performance Strategy**: Prioritize native Qt layouts over custom implementations where possible
+- **Testing Strategy**: Comprehensive testing including visual regression and accessibility compliance
 
 ### Open Questions
-- **Icon Library Choice**: Feather Icons vs custom icon set implementation
-- **Performance Optimization**: Specific caching strategies for component rendering
-- **Testing Framework**: Visual regression testing approach and tools
-- **Accessibility Standards**: Specific WCAG compliance level and testing methodology
+- **Animation Framework**: Determine integration approach for advanced component animations
+- **Custom Layout Algorithms**: Assess need for layouts beyond CSS equivalents
+- **Performance Target**: Validate sub-100ms initialization target with real-world testing
 
 ### Risks & Mitigations
-- **Risk**: Complex component rendering may impact performance
-  - **Mitigation**: Implement lazy loading and caching strategies, monitor performance metrics
-- **Risk**: Cross-platform theme inconsistencies
-  - **Mitigation**: Early and frequent testing on all supported platforms
-- **Risk**: Breaking changes to existing component architecture
-  - **Mitigation**: Comprehensive testing and gradual implementation with rollback capability
+- **Qt Layout Limitations**: Mitigated through hybrid implementation approach and documentation of any limitations
+- **Performance Degradation**: Addressed through efficient QSS generation and layout calculation optimization
+- **Timeline Pressure**: Mitigated through prioritized implementation focusing on critical components first
 
 ---
 
-## File Structure Impact
+## Quality Gates
 
-### New Files to Create
-```
-src/polygon_ui/polybook/
-├── theme/
-│   ├── design_tokens.py
-│   └── color_palette.py (enhanced)
-├── preview/
-│   ├── __init__.py
-│   ├── renderer.py
-│   ├── component_widget.py
-│   ├── props_panel.py
-│   └── error_boundary.py
-├── assets/
-│   └── icons/
-├── export/
-│   └── exporter.py
-└── widgets/
-    └── loading.py
+### Phase Completion Criteria
+- **Phase 1**: Base classes functional, responsive system working, testing infrastructure ready
+- **Phase 2**: All core components implemented with tests and performance benchmarks
+- **Phase 3**: Grid system fully functional with responsive behavior and integration tests
+- **Phase 4**: Utility components complete with accessibility compliance
+- **Phase 5**: Advanced components functional with state management and animations
+- **Phase 6**: 95%+ test coverage, performance requirements met, documentation complete
 
-tests/
-├── test_theme_system.py
-├── test_component_preview.py
-├── test_polybook_integration.py
-└── test_visual_regression.py
-
-docs/
-├── theme-usage.md
-└── api/polybook.md
-```
-
-### Files to Modify
-```
-src/polygon_ui/polybook/
-├── app.py (major refactoring for theme integration and real preview)
-├── component_registry.py (enhance with real component registration)
-└── story.py (enhance with preview rendering support)
-
-src/polygon_ui/theme/
-├── colors.py (extend color palette)
-├── theme.py (enhance with new features)
-└── design_tokens.py (new file)
-
-src/polygon_ui/styles/
-└── qss_generator.py (enhance with state support)
-
-src/polygon_ui/core/
-└── provider.py (fix QSS integration)
-```
-
----
-
-**Project Owner**: Polygon UI Development Team
-**Lead Developer**: [To be assigned]
-**UI/UX Designer**: [To be assigned]
-**Quality Assurance**: [To be assigned]
-
-**Last Updated**: 2025-11-12
-**Version**: 1.0
-**Status**: Ready for Implementation
+### Final Acceptance Criteria
+- All 18 layout components implemented with Mantine API parity
+- Performance requirements met (<100ms initialization, <16ms recalculation)
+- 95%+ test coverage with comprehensive integration tests
+- Full accessibility compliance (WCAG 2.1 AA)
+- Complete documentation with working examples
+- Production-ready release with migration tools

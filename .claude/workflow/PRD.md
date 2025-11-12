@@ -1,594 +1,551 @@
-# PRD: PolyBook Visual Enhancement Project
+# PRD: Comprehensive Layout System for Polygon UI
 
 ## Executive Summary
 
-The PolyBook Visual Enhancement Project aims to transform the current PolyBook application from a functional but visually inconsistent component workshop into a polished, professional-grade development tool. By completing the theme system integration, fixing critical visibility bugs, and implementing a comprehensive design system, we will create a development environment that rivals Storybook in quality and user experience for Qt/PySide component development.
+This document outlines the requirements for implementing a comprehensive layout system for Polygon UI, a Qt/PySide component library designed to provide Mantine-like functionality for desktop applications. The layout system will serve as the foundational infrastructure for the entire UI library, enabling developers to build responsive, flexible interfaces with modern layout patterns.
 
-**Business Value**:
-- Improves developer productivity with better visual feedback
-- Establishes Polygon UI as a premium Qt component library
-- Reduces friction in component development and testing workflows
-- Creates a professional showcase for the UI library capabilities
+**Key Objectives:**
+- Implement 18 core layout components with full Mantine parity
+- Establish robust Qt layout integration leveraging native layout management
+- Create responsive design system with breakpoint-based layouts
+- Integrate seamlessly with existing theme and styling infrastructure
+- Provide comprehensive developer experience with clear, intuitive APIs
 
 ## Problem Statement
 
-The current PolyBook application suffers from multiple critical visual and usability issues that significantly impact the developer experience:
+Qt/PySide developers currently lack a modern, comprehensive layout system that provides the flexibility and ease-of-use found in web frameworks like Mantine. Native Qt layouts are powerful but require verbose code and lack modern responsive design patterns. This results in:
 
-### Critical Issues
-1. **Text Visibility Crisis**: Hardcoded black text (#212529) in component titles becomes completely invisible in dark theme, making the application unusable
-2. **Incomplete Theme Infrastructure**: The QSSGenerator class is referenced throughout the codebase but missing, preventing proper Qt Style Sheet generation
-3. **Styling Inconsistency**: Mixed approach of hardcoded QSS and theme-aware styling creates visual fragmentation
-4. **Non-functional Preview**: Component preview displays placeholder text instead of actual rendered components
-5. **Limited Design System**: Only 5 basic colors available, insufficient for professional UI development
-
-### Impact
-- **Usability**: Dark theme completely broken due to invisible text
-- **Productivity**: Developers cannot properly preview or test components
-- **Professionalism**: Visual inconsistency undermines library credibility
-- **Adoption**: Poor user experience hinders component library adoption
-
-## Objectives
-
-### Primary Objectives
-- [ ] Fix all text visibility issues in both light and dark themes
-- [ ] Implement complete theme system with QSSGenerator class
-- [ ] Create functional component preview with real rendering
-- [ ] Establish comprehensive design system with extended color palette
-- [ ] Achieve professional visual polish throughout the application
-
-### Secondary Objectives
-- [ ] Improve developer workflow with better visual feedback
-- [ ] Create extensible theming architecture for future components
-- [ ] Establish visual consistency across all application panels
-- [ ] Implement smooth transitions and professional animations
+- Increased development time and complexity
+- Inconsistent layout patterns across applications
+- Difficulty implementing responsive designs
+- Lack of cohesive design system integration
 
 ## Success Criteria
 
-### Functional Success Metrics
-- [ ] 100% text visibility in both light and dark themes
-- [ ] All registered components render correctly in preview panel
-- [ ] Theme switching works seamlessly without visual artifacts
-- [ ] QSS generation covers all UI components and states
-- [ ] Zero hardcoded color values in production code
+### Functional Success Criteria
+- [ ] All 18 layout components implemented with Mantine parity
+- [ ] Components work on Qt 6.5+ with PySide6 compatibility
+- [ ] Responsive design functional with breakpoint support (base, sm, md, lg, xl)
+- [ ] Full style props integration (p, m, gap, justify, align, etc.)
+- [ ] Theme system integration with light/dark mode support
+- [ ] Performance meets sub-100ms component initialization
+- [ ] Memory usage optimized for complex layouts (no excessive widget overhead)
 
-### Quality Success Metrics
-- [ ] Professional visual design matching Storybook quality
-- [ ] Smooth theme transitions (<300ms response time)
-- [ ] Consistent spacing and typography throughout application
-- [ ] WCAG AA compliance for color contrast ratios
-- [ ] Performance impact <5% on application startup time
+### Quality Success Criteria
+- [ ] 95%+ test coverage across all layout components
+- [ ] Zero critical bugs in production use cases
+- [ ] Comprehensive documentation with working examples
+- [ ] Accessibility compliance with keyboard navigation support
+- [ ] Consistent API design across all components
+
+### Developer Experience Success Criteria
+- [ ] Developer satisfaction score >4.5/5 in user testing
+- [ ] Learning curve <2 hours for Qt developers
+- [ ] Code reduction >50% compared to native Qt layout implementations
+- [ ] IDE support with type hints and auto-completion
 
 ## Scope
 
 ### In Scope (Phase 1)
 
-#### Core Theme System
-- [ ] QSSGenerator class implementation for complete Qt Style Sheet generation
-- [ ] Enhanced Theme class with extended color palette (20+ colors)
-- [ ] Design token system for colors, typography, spacing, shadows
-- [ ] Theme-aware component styling framework
+#### Core Layout Components (Priority: CRITICAL)
+1. **Container** - Centered content with horizontal padding and configurable max-width
+   - Props: size (xs, sm, md, lg, xl), fluid, px, py
+   - Responsive breakpoint support
+   - Theme-aware spacing
 
-#### Critical Bug Fixes
-- [ ] Fix hardcoded black text visibility in component titles
-- [ ] Replace all hardcoded QSS with theme-aware styling
-- [ ] Implement proper theme switching mechanism
-- [ ] Fix preview panel rendering issues
+2. **Stack** - Vertical layout with configurable spacing
+   - Props: gap, align (start, center, end, stretch), justify
+   - Support for direction="row" (horizontal variant)
+   - Responsive gap configuration
 
-#### Component Preview System
-- [ ] Real component rendering in preview panel
-- [ ] Interactive component states and variants
-- [ ] Props-based component configuration
-- [ ] Live preview updates with prop changes
+3. **Group** - Horizontal layout with configurable spacing
+   - Props: gap, align, justify, wrap
+   - Responsive behavior with breakpoints
+   - Automatic overflow handling
 
-#### Visual Polish
-- [ ] Professional icon system
-- [ ] Smooth theme transitions
-- [ ] Consistent spacing and layout
-- [ ] Improved typography hierarchy
+4. **Flex** - Advanced flexbox layout implementation
+   - Props: direction, wrap, justify, align, gap
+   - Grow and shrink properties for children
+   - Order property for custom sorting
+
+5. **Box** - Enhanced QWidget with full style props support
+   - All style props (m, p, bg, color, etc.)
+   - Layout properties (flex, grid)
+   - Event handling integration
+
+#### Grid System Components (Priority: CRITICAL)
+6. **Grid** - Advanced grid with spans, offsets, ordering
+   - Props: columns, gutter, justify, align
+   - Col children integration
+   - Responsive breakpoint support
+
+7. **SimpleGrid** - Equal-sized columns with responsive breakpoints
+   - Props: cols (responsive object), spacing
+   - Auto-fit and auto-fill behavior
+   - Mobile-first responsive design
+
+8. **Col** - Grid column component used within Grid
+   - Props: span, offset, order
+   - Responsive breakpoint support
+   - Pull and push functionality
+
+#### Utility Layout Components (Priority: HIGH)
+9. **Center** - Perfect centering (horizontal and vertical)
+   - Props: inline (block vs inline-block behavior)
+   - Fluid positioning options
+   - Max-width constraints
+
+10. **AspectRatio** - Maintain specific width-to-height ratios
+    - Props: ratio (numeric or preset), style
+    - Child content preservation
+    - Responsive behavior
+
+11. **Paper** - Visual grouping with shadows and borders
+    - Props: shadow, p, radius, withBorder
+    - Theme-aware elevation
+    - Color scheme integration
+
+12. **Divider** - Visual separation lines
+    - Props: orientation, size, color, label
+    - Custom styling support
+    - Accessibility integration
+
+13. **Space** - Flexible spacing component
+    - Props: h, w, flex (grow/shrink)
+    - Responsive sizing
+    - Negative space support
+
+#### Advanced Layout Components (Priority: MEDIUM)
+14. **Accordion** - Collapsible sections layout
+    - Props: multiple, defaultValue, value, onChange
+    - Animation support
+    - Accessibility compliance
+
+15. **Tabs** - Tab-based content switching
+    - Props: defaultValue, value, onChange, orientation
+    - Animated transitions
+    - Keyboard navigation
+
+16. **Stepper** - Multi-step process layout
+    - Props: active, onStepClick, allowStepClickSelect
+    - Progress indicators
+    - Custom step rendering
+
+17. **Timeline** - Vertical timeline layout
+    - Props: active, bulletSize, lineWidth, align
+    - Reverse direction support
+    - Custom bullet rendering
+
+18. **TimelineItem** - Individual timeline items
+    - Props: active, bullet, lineVariant, title, label
+    - Custom content areas
+    - Status indicators
 
 ### Out of Scope (Phase 1)
+- Mobile-specific layout optimizations
+- Advanced drag-and-drop functionality
+- Virtual scrolling for large lists
+- Custom layout algorithms beyond CSS equivalents
+- Animation framework integration
+- Design system tokens beyond existing theme system
+- Visual editor/drag-and-drop builder
 
-#### Advanced Features
-- Component documentation generation
-- Component testing framework
-- Accessibility testing tools
-- Performance profiling dashboard
-- Component versioning and history
-- Collaborative features (sharing, comments)
+### Future Considerations (Phase 2+)
+- Advanced responsive utilities
+- Layout debugging tools
+- Performance profiling integration
+- Accessibility testing automation
+- Component composition utilities
 
-#### Platform Support
-- Mobile responsive design
-- Web-based deployment
-- Integration with external documentation tools
-- Multi-language support
+## Technical Architecture
 
-## User Stories
+### Component Hierarchy
+```
+PolygonComponent (base)
+├── LayoutComponent (new base class)
+│   ├── Container
+│   ├── Stack
+│   ├── Group
+│   └── Flex
+├── GridComponent (specialized base)
+│   ├── Grid
+│   ├── SimpleGrid
+│   └── Col
+└── UtilityComponent (base)
+    ├── Center
+    ├── AspectRatio
+    ├── Paper
+    ├── Divider
+    └── Space
+```
 
-### Developer Experience Stories
+### Qt Layout Integration Strategy
 
-**As a component developer, I want to see my components rendered in real-time so that I can immediately verify their appearance and behavior.**
+#### Native Layout Mapping
+- **Stack** → QVBoxLayout (QHBoxLayout when direction="row")
+- **Group** → QHBoxLayout with QSizePolicy
+- **Grid** → QGridLayout with span support
+- **Flex** → Custom implementation using QWidget.resize() and size policies
+- **SimpleGrid** → QGridLayout with uniform column sizing
 
-- **Acceptance Criteria**:
-  - Component preview updates instantly when props change
-  - Component renders with correct styling and theme
-  - Interactive components respond to user interaction
-  - Error states display helpful debugging information
-
-**As a developer working in dark mode, I want all text to be visible and readable so that I can use the application without eye strain.**
-
-- **Acceptance Criteria**:
-  - All text has proper contrast ratio in both themes
-  - Theme switching updates all UI elements consistently
-  - No hardcoded colors remain in the application
-  - Text hierarchy is maintained across themes
-
-**As a UI library maintainer, I want a consistent theme system so that all components follow the same design language.**
-
-- **Acceptance Criteria**:
-  - Single source of truth for design tokens
-  - Theme application is automatic and comprehensive
-  - New components inherit theme styling automatically
-  - Theme customization is straightforward
-
-### Workflow Stories
-
-**As a developer, I want to browse available components visually so that I can quickly find what I need for my project.**
-
-- **Acceptance Criteria**:
-  - Component list shows visual previews or icons
-  - Components are categorized and searchable
-  - Component metadata includes usage examples
-  - Navigation is intuitive and responsive
-
-**As a component creator, I want to configure component props through a clean interface so that I can test different states and variants.**
-
-- **Acceptance Criteria**:
-  - Props panel shows all configurable properties
-  - Input validation prevents invalid values
-  - Changes reflect immediately in preview
-  - Default values are clearly indicated
-
-## Functional Requirements
-
-### Theme System Requirements
-
-#### QSSGenerator Class
+#### Responsive Design Implementation
 ```python
-class QSSGenerator:
-    """Generate Qt Style Sheets from theme configuration"""
+# Breakpoint system
+BREAKPOINTS = {
+    'base': 0,    # Mobile first
+    'sm': 576,    # Small tablets
+    'md': 768,    # Tablets
+    'lg': 992,    # Small desktops
+    'xl': 1200    # Desktops and up
+}
 
-    def generate_complete_qss(self, theme: Theme) -> str:
-        """Generate complete application stylesheet"""
-
-    def generate_component_qss(self, component_type: str, theme: Theme) -> str:
-        """Generate stylesheet for specific component type"""
-
-    def generate_state_qss(self, component: str, state: str, theme: Theme) -> str:
-        """Generate stylesheet for component states (hover, pressed, disabled)"""
+# Responsive props usage
+cols = {
+    'base': 1,
+    'sm': 2,
+    'md': 3,
+    'lg': 4
+}
 ```
 
-#### Enhanced Theme System
-```python
-class Theme:
-    """Extended theme system with comprehensive design tokens"""
-
-    # Colors (20+ colors)
-    colors: Dict[str, str]  # Extended palette
-
-    # Typography
-    font_families: Dict[str, str]
-    font_sizes: Dict[str, int]
-    font_weights: Dict[str, int]
-    line_heights: Dict[str, float]
-
-    # Spacing
-    spacing: Dict[str, int]  # xs, sm, md, lg, xl, etc.
-
-    # Shadows
-    shadows: Dict[str, str]  # Various shadow elevations
-
-    # Borders
-    border_radius: Dict[str, int]
-    border_widths: Dict[str, int]
-```
-
-### Component Preview Requirements
-
-#### Rendering Engine
-- [ ] Real component instance creation and rendering
-- [ ] Props-based component configuration
-- [ ] Interactive state management
-- [ ] Error boundary for component failures
-- [ ] Performance optimization for complex components
-
-#### Preview Interface
-- [ ] Live component display area
-- [ ] Props configuration panel
-- [ ] Component documentation display
-- [ ] Code examples and snippets
-- [ ] Export/share functionality
-
-### UI Enhancement Requirements
-
-#### Three-Panel Layout Enhancement
-- [ ] Components panel with visual previews
-- [ ] Enhanced preview panel with proper rendering
-- [ ] Improved props panel with better organization
-- [ ] Resizable panels with persistence
-- [ ] Keyboard shortcuts for navigation
-
-#### Visual Polish Elements
-- [ ] Professional icon set (Feather Icons or similar)
-- [ ] Smooth theme transitions (300ms)
-- [ ] Loading states and skeletons
-- [ ] Hover effects and micro-interactions
-- [ ] Consistent spacing using design tokens
-
-## Non-Functional Requirements
-
-### Performance Requirements
-- **Theme Switching**: <300ms response time
-- **Component Rendering**: <100ms for simple components, <500ms for complex
-- **Application Startup**: <2 seconds initial load
-- **Memory Usage**: <100MB additional memory for theme system
-- **UI Responsiveness**: 60fps animations and transitions
-
-### Compatibility Requirements
-- **Python**: 3.10+ (current project requirement)
-- **PySide6**: Latest stable version
-- **Operating Systems**: Windows 10+, macOS 10.15+, Ubuntu 20.04+
-- **Screen Resolution**: Minimum 1280x720, optimized for 1920x1080+
-
-### Accessibility Requirements
-- **Color Contrast**: WCAG AA compliance (4.5:1 for normal text)
-- **Keyboard Navigation**: Full keyboard accessibility
-- **Screen Reader**: Proper ARIA labels and semantic structure
-- **Focus Management**: Visible focus indicators
-- **Text Scaling**: Support for 150% zoom without layout breakage
-
-### Maintainability Requirements
-- **Code Coverage**: 90%+ for theme system components
-- **Documentation**: Complete API documentation with examples
-- **Type Safety**: Full type hints for all theme-related code
-- **Testing**: Unit tests for all theme generation logic
-- **Code Quality**: Pass all linting and formatting checks
-
-## Technical Specifications
-
-### Architecture Overview
-
-#### Theme System Architecture
-```
-Theme Configuration (TOML) → Theme Class → QSSGenerator → Qt Application
-                                    ↓
-                              Design Tokens
-                                    ↓
-                            Component Styling
-```
-
-#### Component Preview Architecture
-```
-Component Registry → Component Instance → Preview Renderer → Qt Widget
-                      ↓ Props Configuration ↓
-                   Story Definition → Component Configuration
-```
-
-### Implementation Approach
-
-#### Phase 1: Core Theme Infrastructure
-1. **Design Token System**
-   - Create comprehensive design token definitions
-   - Implement token validation and type safety
-   - Add token inheritance and override capabilities
-
-2. **QSSGenerator Implementation**
-   - Parse theme configuration into Qt stylesheets
-   - Handle component states and variants
-   - Optimize for performance and maintainability
-
-3. **Theme Integration**
-   - Replace all hardcoded QSS with theme-aware styling
-   - Implement dynamic theme switching
-   - Add theme persistence and user preferences
-
-#### Phase 2: Component Preview System
-1. **Rendering Engine**
-   - Create component instance management system
-   - Implement props-based configuration
-   - Add error handling and debugging support
-
-2. **Preview Interface**
-   - Enhance preview panel with real component rendering
-   - Add interactive props configuration
-   - Implement live preview updates
-
-#### Phase 3: Visual Polish
-1. **UI Enhancement**
-   - Add professional icons and visual elements
-   - Implement smooth transitions and animations
-   - Refine typography and spacing
-
-2. **User Experience**
-   - Add keyboard shortcuts and accessibility features
-   - Implement panel resizing and persistence
-   - Optimize performance and responsiveness
-
-### Code Structure
-
-#### New Files to Create
-```
-src/polygon_ui/polybook/
-├── theme/
-│   ├── __init__.py
-│   ├── qss_generator.py
-│   ├── theme.py
-│   ├── design_tokens.py
-│   └── color_palette.py
-├── preview/
-│   ├── __init__.py
-│   ├── renderer.py
-│   ├── component_widget.py
-│   └── props_panel.py
-└── assets/
-    ├── icons/
-    └── styles/
-```
-
-#### Files to Modify
-```
-src/polygon_ui/polybook/
-├── app.py (Main application window)
-├── component_registry.py (Enhance with theme support)
-└── story.py (Add preview rendering)
-```
+#### Style Props Integration
+- Extend existing StyleProps system for layout-specific properties
+- Layout properties: gap, justify, align, direction, wrap
+- Responsive style props with breakpoint support
+- Auto-generated QSS from style props
 
 ### Integration Points
 
-#### Existing Systems
-- **Component Registry**: Extend with theme-aware component loading
-- **Story System**: Enhance with real rendering capabilities
-- **Configuration System**: Extend with theme persistence
-- **Main Application**: Integrate theme switching and preview system
+#### Base Class Integration
+```python
+# All layout components inherit from:
+class LayoutComponent(PolygonComponent):
+    """Base class for all layout components"""
 
-#### External Dependencies
-- **PySide6**: Qt framework for UI components
-- **Feather Icons**: Professional icon set (or similar)
-- **Type Checking**: MyPy for type safety
-- **Testing**: Pytest for comprehensive test coverage
+    def __init__(self, **props):
+        super().__init__(**props)
+        self._layout = None  # Qt layout instance
+        self._children = []  # Child widgets
+        self._responsive_props = {}  # Breakpoint-specific props
+
+    def add_child(self, widget):
+        """Add child widget with layout management"""
+        pass
+
+    def apply_responsive_props(self):
+        """Apply breakpoint-specific properties"""
+        pass
+```
+
+#### Theme System Integration
+- Layout spacing from theme.spacing scale
+- Colors from theme.colors for borders, backgrounds
+- Shadows from theme.shadows for Paper components
+- Breakpoints from theme.breakpoints for responsive design
+
+#### QSS Generation Integration
+- Generate efficient QSS from style props
+- Layout-specific QSS (flex properties, grid properties)
+- Dynamic QSS updates for responsive changes
+- Optimized QSS generation to minimize repaints
+
+## Deliverables
+
+### Component Implementation
+- [ ] 18 layout components with full Mantine API parity
+- [ ] Comprehensive type hints for all components
+- [ ] Documentation strings with examples
+- [ ] Component-level test suites
+
+### Infrastructure Components
+- [ ] LayoutComponent base class with Qt integration
+- [ ] Responsive system implementation
+- [ ] Style props extensions for layout properties
+- [ ] QSS generation utilities for layouts
+
+### Testing Suite
+- [ ] Unit tests for all components (95%+ coverage)
+- [ ] Integration tests for complex layout scenarios
+- [ ] Performance benchmarks for layout rendering
+- [ ] Accessibility compliance tests
+- [ ] Visual regression tests for layout consistency
+
+### Documentation
+- [ ] Component API documentation
+- [ ] Usage examples and best practices
+- [ ] Migration guide from native Qt layouts
+- [ ] Performance optimization guide
+
+## Technical Requirements
+
+### Performance Requirements
+- Component initialization: <100ms average
+- Layout recalculation: <16ms (60fps)
+- Memory overhead: <10% increase over native layouts
+- QSS generation: <5ms for complex layouts
+
+### Compatibility Requirements
+- Qt 6.5+ with PySide6 compatibility
+- Python 3.10+ support
+- Cross-platform support (Windows, macOS, Linux)
+- High DPI display support
+
+### Accessibility Requirements
+- WCAG 2.1 AA compliance
+- Keyboard navigation for all interactive components
+- Screen reader support with proper roles and labels
+- Focus management for complex layouts
+
+### Integration Requirements
+- Seamless integration with existing PolygonProvider
+- Compatible with existing theme system
+- Works with current style props infrastructure
+- Extensible architecture for future components
+
+## Testing Requirements
+
+### Unit Testing
+- [ ] Component initialization and props handling
+- [ ] Layout calculation and widget positioning
+- [ ] Responsive behavior simulation
+- [ ] Theme integration and style application
+- [ ] Error handling and edge cases
+
+### Integration Testing
+- [ ] Complex nested layout scenarios
+- [ ] Theme switching with layout updates
+- [ ] Responsive behavior with window resizing
+- [ ] Performance testing with large component trees
+- [ ] Memory leak testing for dynamic layouts
+
+### UI Testing
+- [ ] Visual correctness across platforms
+- [ ] Layout behavior under various conditions
+- [ ] User interaction testing (click, resize, etc.)
+- [ ] Accessibility testing with screen readers
+- [ ] Keyboard navigation testing
+
+### Performance Testing
+- [ ] Layout calculation benchmarks
+- [ ] Memory usage profiling
+- [ ] Rendering performance with complex layouts
+- [ ] QSS generation and application performance
 
 ## Acceptance Criteria
 
-### Theme System Acceptance
+### Core Components
+1. **Container**: Given a Container component with size="md", when rendered, then content should be centered with max-width matching theme.breakpoints.md and horizontal padding applied.
+2. **Stack**: Given a Stack with gap="md" and 3 child widgets, when rendered, then children should be vertically arranged with medium spacing between them.
+3. **Group**: Given a Group with gap="sm" and 4 child widgets, when rendered, then children should be horizontally arranged with small spacing and wrap behavior when width is limited.
+4. **Flex**: Given a Flex with direction="row" and justify="space-between", when rendered, then children should be horizontally distributed with space between first and last child.
+5. **Grid**: Given a Grid with columns={12} and Col children with span={4}, when rendered, then columns should be evenly distributed across 12-column grid.
 
-1. **Given** a theme configuration file, **when** the application starts, **then** all UI elements use theme-appropriate colors
-2. **Given** the theme is switched from light to dark, **when** the switch occurs, **then** all text remains visible with proper contrast
-3. **Given** a component is rendered, **when** hovered or clicked, **then** appropriate state styling is applied
-4. **Given** the QSSGenerator processes a theme, **when** generating stylesheets, **then** no validation errors occur
-5. **Given** design tokens are defined, **when** used throughout the application, **then** consistent values are applied
+### Responsive Behavior
+6. **SimpleGrid**: Given SimpleGrid with cols={'base': 1, 'md': 2, 'lg': 3}, when window width changes from 400px to 800px to 1200px, then grid should show 1, 2, and 3 columns respectively.
+7. **Responsive Props**: Given any layout component with responsive gap props, when breakpoints are crossed, then spacing should update accordingly without manual intervention.
 
-### Component Preview Acceptance
+### Integration Requirements
+8. **Theme Integration**: Given a theme with custom spacing scale, when layout components use gap="lg", then spacing should match theme.spacing.lg value.
+9. **Style Props**: Given any layout component with m="xl" and p="md", when rendered, then margin and padding should be applied according to theme scale.
 
-1. **Given** a component is selected from the registry, **when** loaded in preview, **then** the actual component is rendered
-2. **Given** component props are modified, **when** changes are applied, **then** the preview updates in real-time
-3. **Given** an interactive component is previewed, **when** user interacts with it, **then** appropriate responses occur
-4. **Given** a component has an error, **when** rendered in preview, **then** helpful error information is displayed
-5. **Given** the preview is resized, **when** dimensions change, **then** component layout adapts appropriately
+### Performance Requirements
+10. **Initialization**: Given a complex layout with 50+ nested components, when initialized, then rendering should complete within 100ms.
+11. **Responsive Updates**: Given a responsive layout, when window is resized, then layout should recalculate within 16ms.
 
-### Visual Polish Acceptance
+## Dependencies
 
-1. **Given** the application loads, **when** displaying the interface, **then** professional styling is applied consistently
-2. **Given** theme switching occurs, **when** animation completes, **then** no visual artifacts remain
-3. **Given** panels are resized, **when** layout changes, **then** content remains properly aligned
-4. **Given** keyboard navigation is used, **when** focusing elements, **then** clear focus indicators are visible
-5. **Given** the application is used, **when** performing common tasks, **then** response times meet performance requirements
+### Team Dependencies
+- **Core Development Team**: Qt/PySide developers for component implementation
+- **UI/UX Team**: Design review and accessibility validation
+- **QA Team**: Test planning and execution
+- **Documentation Team**: API documentation and examples
 
-### Quality Assurance Acceptance
+### System Dependencies
+- **Existing PolygonProvider**: Theme system integration
+- **Current StyleProps System**: Style property management
+- **QSSGenerator**: Stylesheet generation and management
+- **Testing Infrastructure**: pytest and testing utilities
 
-1. **Given** all theme system code, **when** tests run, **then** 90%+ coverage is achieved
-2. **Given** the application is built, **when** linting runs, **then** no critical issues are found
-3. **Given** accessibility testing is performed, **when** evaluating with screen readers, **then** all elements are properly announced
-4. **Given** performance testing is conducted, **when** measuring response times, **then** all metrics meet requirements
-5. **Given** cross-platform testing is performed, **when** running on supported OS, **then** consistent behavior is observed
+### External Dependencies
+- **Qt 6.5+**: Core UI framework
+- **PySide6**: Python Qt bindings
+- **pytest**: Testing framework
+- **pytest-qt**: Qt-specific testing utilities
 
-## Success Metrics
+### Timeline Dependencies
+- **Week 1-2**: Core infrastructure (LayoutComponent base, responsive system)
+- **Week 3-4**: Critical components (Container, Stack, Group, Flex, Box)
+- **Week 5-6**: Grid system (Grid, SimpleGrid, Col)
+- **Week 7-8**: Utility components (Center, AspectRatio, Paper, Divider, Space)
+- **Week 9-10**: Advanced components (Accordion, Tabs, Stepper, Timeline)
+- **Week 11-12**: Testing, documentation, and performance optimization
 
-### Quantitative Metrics
+## Risks & Mitigations
 
-#### Performance Metrics
-- **Theme Switching Time**: <300ms (target: <200ms)
-- **Component Rendering Time**: <100ms simple, <500ms complex (target: 50ms/300ms)
-- **Application Startup Time**: <2 seconds (target: <1.5 seconds)
-- **Memory Usage**: <100MB additional (target: <50MB)
-- **UI Response Rate**: 60fps (target: stable 60fps)
+### Technical Risks
 
-#### Quality Metrics
-- **Code Coverage**: 90%+ theme system (target: 95%)
-- **Bug Reduction**: 100% visibility issues fixed (target: zero critical UI bugs)
-- **Color Contrast**: WCAG AA compliance (target: 100% text elements)
-- **Linting Issues**: Zero critical issues (target: zero issues of any severity)
-- **Test Pass Rate**: 100% (target: maintain 100%)
+**Risk**: Qt layout system limitations may prevent perfect CSS flexbox/grid replication
+- **Mitigation**: Create hybrid approach combining Qt layouts with custom positioning logic
+- **Contingency**: Document any limitations and provide alternative approaches
 
-### Qualitative Metrics
+**Risk**: Performance degradation with complex nested layouts
+- **Mitigation**: Implement efficient QSS generation and minimize layout recalculations
+- **Contingency**: Provide performance guidelines and optimization patterns
 
-#### User Experience
-- **Visual Consistency**: Professional appearance across all components
-- **Usability**: Intuitive interface requiring minimal learning
-- **Developer Satisfaction**: Improved workflow efficiency
-- **Polish Level**: Competitive with Storybook quality
+**Risk**: Responsive design implementation complexity
+- **Mitigation**: Start with simple breakpoint system, iterate based on feedback
+- **Contingency**: Simplify responsive props if implementation proves too complex
 
-#### Technical Excellence
-- **Code Quality**: Clean, maintainable, well-documented code
-- **Architecture**: Scalable, extensible theme system
-- **Performance**: Responsive, efficient rendering
-- **Standards**: Following Qt and Python best practices
+### Integration Risks
 
-### Business Impact Metrics
+**Risk**: Theme system integration conflicts
+- **Mitigation**: Work closely with theme system maintainers, implement incremental integration
+- **Contingency**: Create temporary theming solution until full integration is complete
 
-#### Adoption Metrics
-- **Component Library Usage**: Increased adoption due to better tools
-- **Developer Productivity**: Faster component development cycles
-- **Community Engagement**: More contributions and feedback
-- **Brand Perception**: Enhanced professional image
+**Risk**: Breaking changes to existing components
+- **Mitigation**: Implement new base classes without affecting existing components
+- **Contingency**: Version the layout system separately if major changes are required
 
-## Dependencies and Risks
+### Project Risks
 
-### Technical Dependencies
+**Risk**: Timeline overruns due to Qt learning curve
+- **Mitigation**: Allocate extra time for Qt-specific challenges, prioritize core components
+- **Contingency**: Reduce scope to critical components if needed
 
-#### Required Systems
-- **PySide6 Framework**: Qt for Python UI framework
-- **Existing Polygon UI Infrastructure**: Component registry, story system
-- **Python 3.10+**: Runtime environment requirement
-- **Poetry**: Package management and dependency resolution
-- **Current Codebase**: Integration with existing application architecture
+**Risk**: Accessibility compliance challenges
+- **Mitigation**: Involve accessibility experts early, test with screen readers throughout development
+- **Contingency**: Document accessibility limitations and roadmap for improvements
 
-#### External Dependencies
-- **Icon Library**: Professional icon set (Feather Icons or similar)
-- **Testing Framework**: Pytest for comprehensive testing
-- **Type Checking**: MyPy for type safety
-- **Linting Tools**: Ruff, Black for code quality
+## Quality Assurance Strategy
 
-### Development Dependencies
+### Code Quality Standards
+- **Type Coverage**: 100% type hint coverage for all public APIs
+- **Code Coverage**: 95%+ test coverage with comprehensive edge case testing
+- **Code Review**: All code reviewed by at least one team member
+- **Static Analysis**: Pass all linting and type checking rules
 
-#### Team Requirements
-- **Qt/PySide Expertise**: Knowledge of Qt styling and theming
-- **UI/UX Design**: Professional design system experience
-- **Python Development**: Strong Python and type hinting skills
-- **Testing**: Experience with Python testing frameworks
+### Testing Strategy
+- **Test-Driven Development**: Write tests before implementation for complex logic
+- **Automated Testing**: CI/CD pipeline with automated test execution
+- **Manual Testing**: Regular manual testing sessions for complex scenarios
+- **Performance Testing**: Automated performance benchmarks and regression detection
 
-#### Timeline Dependencies
-- **Availability**: Development team availability for 4-6 week sprint
-- **Review Process**: Code review and feedback cycles
-- **Testing Environment**: Access to multiple platforms for testing
+### Documentation Standards
+- **API Documentation**: Complete docstrings with type hints and examples
+- **Usage Guidelines**: Best practices and common patterns documentation
+- **Migration Guides**: Clear instructions for migrating from native Qt layouts
+- **Troubleshooting**: Common issues and solutions documentation
 
-### Risks and Mitigations
-
-#### High Risk: Theme System Complexity
-**Risk**: QSS generation may be more complex than anticipated
-- **Mitigation**: Start with basic theme system, iterate based on learnings
-- **Contingency**: Fall back to simplified theming approach if needed
-- **Monitoring**: Track QSS generation complexity and performance
-
-#### Medium Risk: Component Rendering Performance
-**Risk**: Real-time component rendering may impact performance
-- **Mitigation**: Implement lazy loading and caching strategies
-- **Contingency**: Add performance controls and rendering options
-- **Monitoring**: Profile component rendering times and optimize
-
-#### Medium Risk: Cross-Platform Compatibility
-**Risk**: Theme system may behave differently across platforms
-- **Mitigation**: Test on all supported platforms early and often
-- **Contingency**: Platform-specific adjustments and fallbacks
-- **Monitoring**: Continuous integration testing across platforms
-
-#### Low Risk: User Adoption
-**Risk**: Developers may prefer existing workflow
-- **Mitigation**: Maintain backward compatibility where possible
-- **Contingency**: Gradual rollout with optional features
-- **Monitoring**: User feedback and usage analytics
-
-#### Low Risk: Breaking Changes
-**Risk**: Theme system may break existing functionality
-- **Mitigation**: Comprehensive testing and gradual implementation
-- **Contingency**: Rollback mechanisms and version compatibility
-- **Monitoring**: Regression testing and issue tracking
-
-## Timeline and Milestones
+## Implementation Phases
 
 ### Phase 1: Foundation (Weeks 1-2)
+**Goal**: Establish core infrastructure and base classes
 
-#### Week 1: Theme Infrastructure
-- **Day 1-2**: Design token system implementation
-- **Day 3-4**: QSSGenerator class development
-- **Day 5**: Basic theme switching functionality
+**Deliverables**:
+- LayoutComponent base class with Qt integration
+- Responsive design system implementation
+- Style props extensions for layout properties
+- Basic testing infrastructure
 
-#### Week 2: Integration and Bug Fixes
-- **Day 1-2**: Replace hardcoded styling with theme system
-- **Day 3-4**: Fix text visibility issues
-- **Day 5**: Theme persistence and user preferences
+**Success Criteria**:
+- Base components can render child widgets
+- Responsive system detects breakpoints correctly
+- Style props generate appropriate QSS
 
-**Phase 1 Deliverables**:
-- [ ] Complete theme system with QSS generation
-- [ ] Fixed text visibility in both themes
-- [ ] Basic theme switching functionality
-- [ ] Design token system foundation
+### Phase 2: Core Components (Weeks 3-4)
+**Goal**: Implement critical layout components
 
-### Phase 2: Component Preview (Weeks 3-4)
+**Deliverables**:
+- Container, Stack, Group, Flex, Box components
+- Full Mantine API parity for core components
+- Comprehensive test coverage
+- Performance benchmarks
 
-#### Week 3: Preview System
-- **Day 1-2**: Component rendering engine development
-- **Day 3-4**: Props configuration panel enhancement
-- **Day 5**: Real-time preview updates
+**Success Criteria**:
+- All components render correctly with test cases
+- Performance meets requirements (<100ms initialization)
+- Theme integration works seamlessly
 
-#### Week 4: Interactive Features
-- **Day 1-2**: Interactive component states
-- **Day 3-4**: Error handling and debugging
-- **Day 5**: Performance optimization
+### Phase 3: Grid System (Weeks 5-6)
+**Goal**: Implement advanced grid functionality
 
-**Phase 2 Deliverables**:
-- [ ] Functional component preview system
-- [ ] Real-time component rendering
-- [ ] Interactive props configuration
-- [ ] Error handling and debugging features
+**Deliverables**:
+- Grid, SimpleGrid, Col components
+- Responsive grid behavior
+- Advanced grid features (spans, offsets, ordering)
+- Integration testing with core components
 
-### Phase 3: Visual Polish (Weeks 5-6)
+**Success Criteria**:
+- Grid layouts match Mantine behavior
+- Responsive breakpoints work correctly
+- Performance acceptable for complex grids
 
-#### Week 5: UI Enhancement
-- **Day 1-2**: Professional icon system implementation
-- **Day 3-4**: Smooth transitions and animations
-- **Day 5**: Typography and spacing refinement
+### Phase 4: Utility Components (Weeks 7-8)
+**Goal**: Implement utility and helper components
 
-#### Week 6: Final Polish and Testing
-- **Day 1-2**: Comprehensive testing and bug fixes
-- **Day 3-4**: Performance optimization
-- **Day 5**: Documentation and final review
+**Deliverables**:
+- Center, AspectRatio, Paper, Divider, Space components
+- Cross-component integration tests
+- Documentation and examples
+- Accessibility compliance validation
 
-**Phase 3 Deliverables**:
-- [ ] Professional visual design implementation
-- [ ] Smooth transitions and animations
-- [ ] Complete testing coverage
-- [ ] Documentation and deployment ready
+**Success Criteria**:
+- All utility components function as specified
+- Accessibility requirements met
+- Documentation complete and accurate
 
-### Critical Path Dependencies
+### Phase 5: Advanced Components (Weeks 9-10)
+**Goal**: Implement complex interactive layouts
 
-#### Mandatory Sequences
-1. **Theme System** must be completed before **Component Preview** integration
-2. **Design Tokens** must be defined before **QSS Generation** implementation
-3. **Basic Rendering** must work before **Interactive Features** development
+**Deliverables**:
+- Accordion, Tabs, Stepper, Timeline components
+- State management integration
+- Animation and transition support
+- User interaction testing
 
-#### Parallel Development Opportunities
-- **UI Polish** can begin once basic theming is functional
-- **Testing** can start as soon as individual components are complete
-- **Documentation** can be written alongside development
+**Success Criteria**:
+- Advanced components provide full functionality
+- User interactions work smoothly
+- Performance acceptable for complex scenarios
 
-### Success Gates
+### Phase 6: Polish & Release (Weeks 11-12)
+**Goal**: Final testing, documentation, and release preparation
 
-#### Phase 1 Gate (Week 2)
-- [ ] All text visibility issues resolved
-- [ ] Theme switching works without errors
-- [ ] QSS generation passes validation
-- [ ] Code coverage >80% for theme system
+**Deliverables**:
+- Complete test suite with 95%+ coverage
+- Comprehensive documentation and examples
+- Performance optimization
+- Release candidate
 
-#### Phase 2 Gate (Week 4)
-- [ ] All registered components render correctly
-- [ ] Real-time preview updates function
-- [ ] Props configuration works without errors
-- [ ] Performance meets requirements
+**Success Criteria**:
+- All acceptance criteria met
+- Performance requirements satisfied
+- Documentation complete and helpful
+- Release ready for production use
 
-#### Final Gate (Week 6)
-- [ ] All acceptance criteria met
-- [ ] Performance benchmarks achieved
-- [ ] Complete test coverage (>90%)
-- [ ] Documentation is comprehensive
-- [ ] Ready for production deployment
+## Metrics and Monitoring
 
----
+### Development Metrics
+- **Code Coverage**: Target 95%+ across all components
+- **Performance Benchmarks**: Track initialization and rendering times
+- **Bug Rate**: Maintain <5 critical bugs throughout development
+- **Test Pass Rate**: 100% test pass rate in CI/CD pipeline
 
-**Project Owner**: Polygon UI Development Team
-**Project Manager**: [To be assigned]
-**Lead Developer**: [To be assigned]
-**UI/UX Designer**: [To be assigned]
-**Quality Assurance**: [To be assigned]
+### Quality Metrics
+- **Code Review Coverage**: 100% of code reviewed before merge
+- **Documentation Coverage**: All public APIs documented
+- **Type Coverage**: 100% type hint coverage
+- **Accessibility Score**: WCAG 2.1 AA compliance for all components
 
-**Last Updated**: 2025-11-12
-**Version**: 1.0
-**Status**: Draft - Ready for Review
+### Success Metrics
+- **Developer Satisfaction**: Survey score >4.5/5 after release
+- **Adoption Rate**: Usage in >50% of new Polygon UI projects within 3 months
+- **Performance Improvement**: 50%+ code reduction compared to native Qt layouts
+- **Community Feedback**: Positive reviews and low issue reporting rate
+
+## Conclusion
+
+This comprehensive layout system will establish Polygon UI as a premier Qt/PySide component library, providing developers with modern, flexible layout capabilities that significantly reduce development complexity and improve application consistency. The systematic approach ensures robust implementation while maintaining high quality standards and developer experience.
+
+The phased implementation allows for iterative development and testing, ensuring each component meets the high standards required for a production-ready UI library. By leveraging Qt's native layout capabilities while providing modern abstractions, this system bridges the gap between desktop and web development paradigms.

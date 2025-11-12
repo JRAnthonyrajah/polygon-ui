@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLayout, QGridL
 from PySide6.QtCore import Qt, QMargins, Signal, Property
 
 from ...core.component import PolygonComponent
+from ...core.provider import PolygonProvider
 
 
 class LayoutComponent(PolygonComponent):
@@ -85,7 +86,9 @@ class LayoutComponent(PolygonComponent):
         # Override in subclasses to implement specific layout logic
         pass
 
-    def set_responsive_prop(self, prop_name: str, value: Union[Any, Dict[str, Any]]) -> None:
+    def set_responsive_prop(
+        self, prop_name: str, value: Union[Any, Dict[str, Any]]
+    ) -> None:
         """
         Set a responsive property that can vary by breakpoint.
 
@@ -95,6 +98,19 @@ class LayoutComponent(PolygonComponent):
               e.g., {"base": 1, "sm": 2, "md": 3}
         """
         self._responsive_props[prop_name] = value
+        # Update internal prop if it's a layout prop
+        if prop_name in ["gap", "justify", "align", "direction", "columns", "gutter"]:
+            current_value = self.get_responsive_value(
+                prop_name, value if not isinstance(value, dict) else value.get("base")
+            )
+            if prop_name == "gap":
+                self._gap = current_value
+            elif prop_name == "justify":
+                self._justify = current_value
+            elif prop_name == "align":
+                self._align = current_value
+            elif prop_name == "direction":
+                self._direction = current_value
         self._update_responsive_props()
 
     def get_responsive_value(self, prop_name: str, default: Any = None) -> Any:
@@ -119,8 +135,10 @@ class LayoutComponent(PolygonComponent):
 
             # Find the best matching breakpoint value
             for bp in ["xl", "lg", "md", "sm", "base"]:
-                if bp in value and (bp == current_breakpoint or
-                                  self._breakpoint_ge(bp, current_breakpoint)):
+                if bp in value and (
+                    bp == current_breakpoint
+                    or self._breakpoint_ge(bp, current_breakpoint)
+                ):
                     return value[bp]
 
             # Fallback to first available value
@@ -136,13 +154,7 @@ class LayoutComponent(PolygonComponent):
             Current breakpoint: "base", "sm", "md", "lg", or "xl"
         """
         # Define breakpoints
-        breakpoints = {
-            "base": 0,
-            "sm": 576,
-            "md": 768,
-            "lg": 992,
-            "xl": 1200
-        }
+        breakpoints = {"base": 0, "sm": 576, "md": 768, "lg": 992, "xl": 1200}
 
         width = self.width()
 
@@ -170,8 +182,24 @@ class LayoutComponent(PolygonComponent):
 
     def _update_responsive_props(self) -> None:
         """Update all responsive properties based on current breakpoint."""
-        # Override in subclasses to handle responsive updates
-        pass
+        current_bp = self._get_current_breakpoint()
+
+        # Update layout props based on responsive values
+        for prop_name in ["gap", "justify", "align", "direction"]:
+            responsive_val = self.get_responsive_value(prop_name)
+            if responsive_val:
+                if prop_name == "gap":
+                    self._gap = responsive_val
+                elif prop_name == "justify":
+                    self._justify = responsive_val
+                elif prop_name == "align":
+                    self._align = responsive_val
+                elif prop_name == "direction":
+                    self._direction = responsive_val
+                self._update_layout_styling()
+
+        # Regenerate QSS for responsive changes
+        self._update_styling()
 
     # Property setters/getters for common layout props
     @Property(str)
@@ -207,23 +235,48 @@ class LayoutComponent(PolygonComponent):
         self._align = value
         self._update_layout_styling()
 
-    def _update_layout_styling(self) -> None:
+    @Property(str)
+    def direction(self) -> str:
+        """Get the layout direction."""
+        return self._direction
+
+    @direction.setter
+    def direction(self, value: str) -> None:
+        """Set the layout direction."""
+        self._direction = value
+        self._setup_layout()  # Re-setup if direction changes
+        self._update_layout_styling()
         """Update the layout styling based on current properties."""
         if not self._provider:
             return
 
+        # Apply Qt layout properties (spacing, alignment)
         # Convert gap to pixels based on theme spacing
-        if hasattr(self._provider, 'get_theme_value'):
-            gap_pixels = self._provider.get_theme_value(f"spacing.{self._gap}", 8)
-        else:
-            gap_pixels = 8  # Fallback
+        gap_pixels = (
+            self._provider.get_theme_value(f"spacing.{self._gap}", 8)
+            if hasattr(self._provider, "get_theme_value")
+            else 8
+        )
 
         # Apply spacing to layout
         if self._layout:
             if isinstance(self._layout, (QVBoxLayout, QHBoxLayout)):
                 self._layout.setSpacing(gap_pixels)
+                # Justify and align for box layouts
+                if self._justify in ["center", "end"]:
+                    self._layout.setAlignment(
+                        Qt.AlignTop if self._direction == "column" else Qt.AlignLeft
+                    )
+                if self._align in ["center", "end"]:
+                    for i in range(self._layout.count()):
+                        item = self._layout.itemAt(i)
+                        if item.widget():
+                            item.widget().setAlignment(Qt.AlignCenter)
             elif isinstance(self._layout, QGridLayout):
                 self._layout.setSpacing(gap_pixels)
+
+        # Generate and apply QSS for visual styling
+        self._update_styling()
 
     def resizeEvent(self, event) -> None:
         """Handle resize events to update responsive properties."""

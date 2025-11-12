@@ -155,13 +155,35 @@ class PolygonComponent(QWidget):
             "size": self._size,
         }
 
+        # Add layout-specific props to combined if it's a layout component
+        if hasattr(self, "_gap"):
+            combined_props.update(
+                {
+                    "gap": self._gap,
+                    "justify": self._justify,
+                    "align": self._align,
+                    "direction": getattr(self, "_direction", "column"),
+                }
+            )
+        if hasattr(self, "_columns"):
+            combined_props.update(
+                {
+                    "columns": self._columns,
+                    "gutter": self._gutter,
+                }
+            )
+        # Add responsive props
+        if hasattr(self, "_responsive_props"):
+            combined_props["responsive"] = self._responsive_props
+
         # Generate QSS from style props
         component_qss = self._provider.generate_component_qss(
             component_name, combined_props
         )
 
         # Apply to widget
-        self.setStyleSheet(component_qss)
+        current_style = self.styleSheet()
+        self.setStyleSheet(current_style + "\n" + component_qss)
 
     def get_theme_value(self, path: str, default: Any = None) -> Any:
         """

@@ -5,17 +5,24 @@ from PySide6.QtCore import QSettings
 
 from ..theme.theme import ColorScheme, Theme
 from ..styles.qss_generator import QSSGenerator
+from ...layout.utils.qss import (
+    generate_flex_qss,
+    generate_grid_qss,
+    generate_responsive_qss,
+)
 
 
 class PolygonProvider:
     """Provides theme management and QSS generation for Polygon UI applications."""
 
-    _instance: Optional['PolygonProvider'] = None
+    _instance: Optional["PolygonProvider"] = None
     _initialized: bool = False
 
     def __init__(self, theme: Theme):
         if PolygonProvider._instance is not None:
-            raise RuntimeError("PolygonProvider is a singleton. Use get_instance() instead.")
+            raise RuntimeError(
+                "PolygonProvider is a singleton. Use get_instance() instead."
+            )
 
         self.theme = theme
         self._theme_provider = self  # For compatibility
@@ -25,7 +32,7 @@ class PolygonProvider:
         PolygonProvider._initialized = True
 
     @classmethod
-    def get_instance(cls) -> Optional['PolygonProvider']:
+    def get_instance(cls) -> Optional["PolygonProvider"]:
         """Get the singleton instance of PolygonProvider."""
         return cls._instance
 
@@ -35,7 +42,7 @@ class PolygonProvider:
         return cls._initialized
 
     @classmethod
-    def initialize(cls, theme: Theme) -> 'PolygonProvider':
+    def initialize(cls, theme: Theme) -> "PolygonProvider":
         """Initialize the singleton PolygonProvider with a theme."""
         if cls._instance is None:
             return cls(theme)

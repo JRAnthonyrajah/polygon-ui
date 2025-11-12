@@ -3,7 +3,7 @@ Component registry for PolyBook.
 """
 
 from typing import Dict, Any, Type, Callable, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -14,8 +14,9 @@ class ComponentInfo:
     component_class: Type
     description: str
     category: str
-    default_props: Dict[str, Any]
-    examples: List[Dict[str, Any]]
+    tags: List[str] = field(default_factory=list)
+    default_props: Dict[str, Any] = field(default_factory=dict)
+    examples: List[Dict[str, Any]] = field(default_factory=list)
 
 
 class ComponentRegistry:
@@ -31,6 +32,7 @@ class ComponentRegistry:
         component_class: Type,
         description: str = "",
         category: str = "General",
+        tags: List[str] = None,
         default_props: Dict[str, Any] = None,
         examples: List[Dict[str, Any]] = None,
     ) -> None:
@@ -42,6 +44,7 @@ class ComponentRegistry:
             component_class: Component class
             description: Component description
             category: Component category
+            tags: List of tags for search and filtering
             default_props: Default properties for the component
             examples: Example configurations
         """
@@ -50,6 +53,7 @@ class ComponentRegistry:
             component_class=component_class,
             description=description,
             category=category,
+            tags=tags or [],
             default_props=default_props or {},
             examples=examples or [],
         )
@@ -61,6 +65,16 @@ class ComponentRegistry:
             self._categories[category] = []
         if name not in self._categories[category]:
             self._categories[category].append(name)
+
+        # Update tags index if needed (for future search)
+        if not hasattr(self, "_tags"):
+            self._tags = {}
+        for tag in tags or []:
+            tag_lower = tag.lower()
+            if tag_lower not in self._tags:
+                self._tags[tag_lower] = []
+            if name not in self._tags[tag_lower]:
+                self._tags[tag_lower].append(name)
 
     def get_component(self, name: str) -> ComponentInfo:
         """Get component information by name."""
@@ -88,7 +102,7 @@ class ComponentRegistry:
         ]
 
     def search_components(self, query: str) -> List[ComponentInfo]:
-        """Search components by name or description."""
+        """Search components by name, description, category, or tags."""
         query = query.lower()
         results = []
 
@@ -97,6 +111,7 @@ class ComponentRegistry:
                 query in component_info.name.lower()
                 or query in component_info.description.lower()
                 or query in component_info.category.lower()
+                or any(query in tag.lower() for tag in component_info.tags)
             ):
                 results.append(component_info)
 

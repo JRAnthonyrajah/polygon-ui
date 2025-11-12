@@ -44,8 +44,14 @@ class PolyBookMainWindow(QMainWindow):
         self.current_component = None
         self.current_story = None
 
+        print("🚀 Initializing PolyBookMainWindow...")
         self.init_ui()
+        print("✅ UI initialization complete")
         self.init_theme()
+        print("✅ Theme initialization complete")
+        # CRITICAL FIX: Apply theme after all widgets are created
+        self.apply_modern_styling()
+        print("✅ PolyBookMainWindow initialization complete!")
 
     def init_ui(self):
         """Initialize the user interface."""
@@ -64,16 +70,16 @@ class PolyBookMainWindow(QMainWindow):
         main_layout.addWidget(splitter)
 
         # Left panel - Component list
-        left_panel = self.create_left_panel()
-        splitter.addWidget(left_panel)
+        self.left_panel = self.create_left_panel()
+        splitter.addWidget(self.left_panel)
 
         # Center panel - Component preview
-        center_panel = self.create_center_panel()
-        splitter.addWidget(center_panel)
+        self.center_panel = self.create_center_panel()
+        splitter.addWidget(self.center_panel)
 
         # Right panel - Props and documentation
-        right_panel = self.create_right_panel()
-        splitter.addWidget(right_panel)
+        self.right_panel = self.create_right_panel()
+        splitter.addWidget(self.right_panel)
 
         # Set splitter sizes
         splitter.setSizes([250, 500, 450])
@@ -87,103 +93,27 @@ class PolyBookMainWindow(QMainWindow):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
-        # Header
+        # Header - styling will be applied by theme system
         self.components_header = QLabel("Components")
-        # Theme-aware styling will be applied in apply_theme_styling
-        self.components_header.setProperty("class", "header")
-        self.components_header.setStyleSheet(
-            """
-            QLabel[class="header"] {
-                font-size: 16px;
-                font-weight: 600;
-                padding: 8px 0px;
-                border-bottom: 2px solid #e1e5e9;
-                margin-bottom: 8px;
-            }
-        """
-        )
-
         layout.addWidget(self.components_header)
 
-        # Search box
+        # Search box - styling will be applied by theme system
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search components...")
-        self.search_box.setStyleSheet(
-            """
-            QLineEdit {
-                padding: 10px 12px;
-                border: 2px solid #e1e5e9;
-                border-radius: 8px;
-                font-size: 14px;
-            }
-            QLineEdit:focus {
-                outline: none;
-            }
-        """
-        )
         self.search_box.textChanged.connect(self.on_search_components)
         layout.addWidget(self.search_box)
 
-        # Component list
+        # Component list - styling will be applied by theme system
         self.component_list = QListWidget()
-        self.component_list.setStyleSheet(
-            """
-            QListWidget {
-                border: 1px solid #e1e5e9;
-                border-radius: 8px;
-                padding: 4px;
-            }
-            QListWidget::item {
-                padding: 12px 16px;
-                margin: 2px 0px;
-                border-radius: 6px;
-                font-size: 14px;
-            }
-        """
-        )
         self.component_list.itemClicked.connect(self.on_component_selected)
         layout.addWidget(self.component_list)
 
-        # Theme controls
+        # Theme controls - styling will be applied by theme system
         theme_group = QGroupBox("Theme")
-        theme_group.setProperty("class", "group-box")
-        theme_group.setStyleSheet(
-            """
-            QGroupBox[class="group-box"] {
-                font-size: 14px;
-                font-weight: 600;
-                border: 2px solid #e1e5e9;
-                border-radius: 8px;
-                margin-top: 16px;
-                padding-top: 8px;
-            }
-        """
-        )
         theme_layout = QVBoxLayout(theme_group)
 
-        # Color scheme toggle
+        # Color scheme toggle - styling will be applied by theme system
         self.theme_toggle = QPushButton("Toggle Dark/Light")
-        self.theme_toggle.setStyleSheet(
-            """
-            QPushButton {
-                padding: 10px 16px;
-                border: 2px solid #228be6;
-                border-radius: 6px;
-                background-color: #228be6;
-                color: #ffffff;
-                font-size: 13px;
-                font-weight: 500;
-            }
-            QPushButton:hover {
-                background-color: #1c7ed6;
-                border-color: #1c7ed6;
-            }
-            QPushButton:pressed {
-                background-color: #1971c2;
-                border-color: #1971c2;
-            }
-        """
-        )
         self.theme_toggle.clicked.connect(self.toggle_theme)
         theme_layout.addWidget(self.theme_toggle)
 
@@ -191,31 +121,10 @@ class PolyBookMainWindow(QMainWindow):
         primary_color_layout = QHBoxLayout()
         primary_color_layout.setContentsMargins(0, 8, 0, 0)
 
-        primary_label = QLabel("Primary:")
-        primary_label.setStyleSheet(
-            """
-            QLabel {
-                font-size: 13px;
-                padding-right: 8px;
-            }
-        """
-        )
-        primary_color_layout.addWidget(primary_label)
+        self.primary_label = QLabel("Primary:")
+        primary_color_layout.addWidget(self.primary_label)
 
         self.primary_color_combo = QComboBox()
-        self.primary_color_combo.setStyleSheet(
-            """
-            QComboBox {
-                padding: 6px 10px;
-                border: 2px solid #e1e5e9;
-                border-radius: 6px;
-                font-size: 13px;
-            }
-            QComboBox:focus {
-                outline: none;
-            }
-        """
-        )
         self.primary_color_combo.addItems(["blue", "red", "green", "yellow", "purple"])
         self.primary_color_combo.currentTextChanged.connect(self.change_primary_color)
         primary_color_layout.addWidget(self.primary_color_combo)
@@ -235,13 +144,12 @@ class PolyBookMainWindow(QMainWindow):
         # Header with component name and story selector
         header_layout = QHBoxLayout()
         self.component_title = QLabel("Select a component")
-        # Theme-aware styling will be applied in apply_theme_styling
-        self.component_title.setProperty("class", "component-title")
         self.component_title.setStyleSheet(
             """
-            QLabel[class="component-title"] {
+            QLabel {
                 font-size: 18px;
                 font-weight: 600;
+                color: #1a1a1a;
                 padding: 0px;
             }
         """
@@ -251,43 +159,10 @@ class PolyBookMainWindow(QMainWindow):
         header_layout.addStretch()
 
         # Story selector
-        story_label = QLabel("Story:")
-        story_label.setStyleSheet(
-            """
-            QLabel {
-                font-size: 14px;
-                padding-right: 8px;
-            }
-        """
-        )
-        header_layout.addWidget(story_label)
+        self.story_label = QLabel("Story:")
+        header_layout.addWidget(self.story_label)
 
         self.story_combo = QComboBox()
-        self.story_combo.setStyleSheet(
-            """
-            QComboBox {
-                padding: 8px 12px;
-                border: 2px solid #e1e5e9;
-                border-radius: 6px;
-                font-size: 14px;
-                min-width: 150px;
-            }
-            QComboBox:focus {
-                outline: none;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 20px;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid currentColor;
-                margin-right: 5px;
-            }
-        """
-        )
         self.story_combo.currentTextChanged.connect(self.on_story_changed)
         header_layout.addWidget(self.story_combo)
 
@@ -295,12 +170,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Component preview area
         preview_group = QGroupBox("Preview")
-        preview_group.setProperty("class", "group-box")
         preview_group.setStyleSheet(
             """
-            QGroupBox[class="group-box"] {
+            QGroupBox {
                 font-size: 14px;
                 font-weight: 600;
+                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 16px;
@@ -311,17 +186,43 @@ class PolyBookMainWindow(QMainWindow):
         preview_layout = QVBoxLayout(preview_group)
         preview_layout.setContentsMargins(16, 24, 16, 16)
 
+        # Create preview area with proper layout for dynamic content
         self.preview_area = QWidget()
         self.preview_area.setMinimumHeight(400)
-        self.preview_area.setStyleSheet(
+
+        # Add layout manager to handle dynamic widget addition/removal
+        preview_content_layout = QVBoxLayout(self.preview_area)
+        preview_content_layout.setContentsMargins(8, 8, 8, 8)
+
+        # Apply theme-aware styling for preview area
+        if self.polygon_provider and hasattr(self.polygon_provider, "theme"):
+            theme = self.polygon_provider.theme
+            is_dark = theme.is_dark_mode()
+            border_color = theme.colors.get_border(is_dark)
+            surface_color = theme.colors.get_surface(is_dark)
+
+            self.preview_area.setStyleSheet(
+                f"""
+                QWidget {{
+                    border: 2px dashed {border_color};
+                    border-radius: 8px;
+                    background-color: {surface_color};
+                    margin: 8px 0px;
+                }}
             """
-            QWidget {
-                border: 2px dashed #dee2e6;
-                border-radius: 8px;
-                margin: 8px 0px;
-            }
-        """
-        )
+            )
+        else:
+            # Fallback styling
+            self.preview_area.setStyleSheet(
+                """
+                QWidget {
+                    border: 2px dashed #dee2e6;
+                    border-radius: 8px;
+                    background-color: #f8f9fa;
+                    margin: 8px 0px;
+                }
+            """
+            )
         preview_layout.addWidget(self.preview_area)
 
         layout.addWidget(preview_group)
@@ -337,13 +238,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Props editor
         props_group = QGroupBox("Props")
-        # Theme-aware styling will be applied in apply_theme_styling
-        props_group.setProperty("class", "group-box")
         props_group.setStyleSheet(
             """
-            QGroupBox[class="group-box"] {
+            QGroupBox {
                 font-size: 14px;
                 font-weight: 600;
+                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 0px;
@@ -367,12 +267,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Documentation
         docs_group = QGroupBox("Documentation")
-        docs_group.setProperty("class", "group-box")
         docs_group.setStyleSheet(
             """
-            QGroupBox[class="group-box"] {
+            QGroupBox {
                 font-size: 14px;
                 font-weight: 600;
+                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 0px;
@@ -388,12 +288,14 @@ class PolyBookMainWindow(QMainWindow):
             QTextEdit {
                 border: 1px solid #e1e5e9;
                 border-radius: 6px;
+                background-color: #f8f9fa;
+                color: #495057;
                 font-size: 13px;
                 padding: 12px;
                 line-height: 1.5;
             }
             QTextEdit:focus {
-                outline: none;
+                border-color: #228be6;
             }
         """
         )
@@ -405,12 +307,12 @@ class PolyBookMainWindow(QMainWindow):
 
         # Generated code
         code_group = QGroupBox("Generated Code")
-        code_group.setProperty("class", "group-box")
         code_group.setStyleSheet(
             """
-            QGroupBox[class="group-box"] {
+            QGroupBox {
                 font-size: 14px;
                 font-weight: 600;
+                color: #1a1a1a;
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 margin-top: 0px;
@@ -434,7 +336,7 @@ class PolyBookMainWindow(QMainWindow):
                 line-height: 1.4;
             }
             QTextEdit:focus {
-                outline: none;
+                border-color: #228be6;
             }
         """
         )
@@ -453,177 +355,13 @@ class PolyBookMainWindow(QMainWindow):
         # Create and initialize PolygonProvider
         self.polygon_provider = PolygonProvider(theme)
 
-        # Apply theme to main window
-        self.apply_theme_styling()
+        # NOTE: Theme styling now applied in __init__ after UI creation
 
         # Add some example components for testing
         self.add_example_components()
 
         # Populate component list
         self.populate_component_list()
-
-    def apply_theme_styling(self):
-        """Apply theme-aware styling to the main window."""
-        if not self.polygon_provider:
-            return
-
-        theme = self.polygon_provider.theme
-        is_dark = theme.color_scheme == ColorScheme.DARK
-
-        # Theme colors
-        text_color = theme.get_color("gray", 9 if not is_dark else 0)
-        border_color = theme.get_color("gray", 3 if not is_dark else 6)
-        bg_color = theme.get_color("gray", 0 if is_dark else 1)
-        panel_bg = theme.get_color("gray", 1 if not is_dark else 2)
-
-        # Apply colors directly to specific labels to override any hardcoded styles
-        if hasattr(self, "component_title"):
-            # Use explicit high-contrast colors based on theme
-            if is_dark:
-                title_color = "#ffffff"  # White text for dark theme
-            else:
-                title_color = "#212529"  # Dark text for light theme
-
-            self.component_title.setStyleSheet(
-                f"""
-                QLabel {{
-                    font-size: 18px;
-                    font-weight: 600;
-                    padding: 0px;
-                    color: {title_color} !important;
-                    background-color: transparent !important;
-                }}
-                """
-            )
-
-        # Apply theme color to Components header label with forceful styling
-        if hasattr(self, "components_header"):
-            # Use explicit high-contrast colors based on theme
-            if is_dark:
-                label_color = "#ffffff"  # White text for dark theme
-                border_col = "#495057"  # Lighter border for dark theme
-            else:
-                label_color = "#212529"  # Dark text for light theme
-                border_col = "#dee2e6"  # Standard border for light theme
-
-            new_stylesheet = f"""
-                QLabel {{
-                    font-size: 16px;
-                    font-weight: 600;
-                    padding: 8px 0px;
-                    border-bottom: 2px solid {border_col};
-                    margin-bottom: 8px;
-                    color: {label_color} !important;
-                    background-color: transparent !important;
-                }}
-                """
-            self.components_header.setStyleSheet(new_stylesheet)
-
-        # Set comprehensive theme styling
-        stylesheet = f"""
-            QMainWindow {{
-                background-color: {bg_color};
-            }}
-
-            QWidget {{
-                background-color: transparent;
-                color: {text_color};
-            }}
-
-            /* Group boxes */
-            QGroupBox[class="group-box"] {{
-                color: {text_color};
-                border-color: {border_color};
-                background-color: {panel_bg};
-            }}
-
-            QGroupBox[class="group-box"]::title {{
-                color: {text_color};
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }}
-
-            /* Component list */
-            QListWidget {{
-                background-color: {panel_bg};
-                border-color: {border_color};
-            }}
-
-            QListWidget::item {{
-                color: {text_color};
-                background-color: {panel_bg};
-            }}
-
-            QListWidget::item:hover {{
-                background-color: {theme.get_primary_color()}20;
-            }}
-
-            QListWidget::item:selected {{
-                background-color: {theme.get_primary_color()};
-                color: white;
-            }}
-
-            /* Line edits */
-            QLineEdit {{
-                background-color: {panel_bg};
-                color: {text_color};
-                border-color: {border_color};
-            }}
-
-            /* Combo boxes */
-            QComboBox {{
-                background-color: {panel_bg};
-                color: {text_color};
-                border-color: {border_color};
-            }}
-
-            QComboBox::drop-down {{
-                background-color: {panel_bg};
-                border: none;
-            }}
-
-            QComboBox::down-arrow {{
-                border-top-color: {text_color};
-            }}
-
-            /* Text areas */
-            QTextEdit {{
-                background-color: {panel_bg};
-                color: {text_color};
-                border-color: {border_color};
-            }}
-
-            /* Buttons */
-            QPushButton {{
-                background-color: {theme.get_primary_color()};
-                color: white;
-                border-color: {theme.get_primary_color()};
-            }}
-
-            QPushButton:hover {{
-                background-color: {theme.colors.get_color(theme.primary_color, 7 if not is_dark else 5)};
-                border-color: {theme.colors.get_color(theme.primary_color, 7 if not is_dark else 5)};
-            }}
-
-            QPushButton:pressed {{
-                background-color: {theme.colors.get_color(theme.primary_color, 8 if not is_dark else 4)};
-                border-color: {theme.colors.get_color(theme.primary_color, 8 if not is_dark else 4)};
-            }}
-        """
-        self.setStyleSheet(stylesheet)
-
-    def toggle_theme(self):
-        """Toggle between light and dark theme."""
-        if self.polygon_provider:
-            self.polygon_provider.toggle_color_scheme()
-            self.apply_theme_styling()  # Reapply theme-aware styling
-
-    def change_primary_color(self, color: str):
-        """Change the primary color."""
-        if self.polygon_provider:
-            self.polygon_provider.update_theme(primary_color=color)
-            self.apply_theme_styling()  # Reapply theme-aware styling
 
     def add_example_components(self):
         """Add some example components to the registry."""
@@ -812,11 +550,21 @@ class PolyBookMainWindow(QMainWindow):
 
     def render_component_placeholder(self, story: Story):
         """Render a placeholder for the component."""
+        # Defensive check for layout existence
+        if not self.preview_area or not self.preview_area.layout():
+            print("Warning: preview_area or its layout is not properly initialized")
+            return
+
         # Clear preview area
-        for i in reversed(self.preview_area.layout().count()):
-            child = self.preview_area.layout().itemAt(i).widget()
-            if child:
-                child.setParent(None)
+        try:
+            # FIX: Use range() to create sequence for reversed()
+            for i in reversed(range(self.preview_area.layout().count())):
+                child = self.preview_area.layout().itemAt(i).widget()
+                if child:
+                    child.setParent(None)
+        except Exception as e:
+            print(f"Error clearing preview area: {e}")
+            return
 
         # Create placeholder widget
         props_text = self.format_dict(story.props) if story.props else "No custom props"
@@ -824,19 +572,49 @@ class PolyBookMainWindow(QMainWindow):
             f"🧩 {self.current_component.name}\n\n📋 Configuration:\n{props_text}\n\n📱 Component will render here"
         )
         placeholder.setAlignment(Qt.AlignCenter)
-        placeholder.setStyleSheet(
-            """
-            QLabel {
-                border: 2px dashed #dee2e6;
-                border-radius: 8px;
-                padding: 32px 16px;
-                font-size: 14px;
-                line-height: 1.6;
-            }
-        """
-        )
+        # Apply theme-aware styling for placeholder
+        if self.polygon_provider and hasattr(self.polygon_provider, "theme"):
+            theme = self.polygon_provider.theme
+            is_dark = theme.is_dark_mode()
+            surface_color = theme.colors.get_surface(is_dark)
+            border_color = theme.colors.get_border(is_dark)
+            text_color = theme.colors.get_text(is_dark)
 
-        self.preview_area.layout().addWidget(placeholder)
+            placeholder.setStyleSheet(
+                f"""
+                QLabel {{
+                    background-color: {surface_color};
+                    border: 2px dashed {border_color};
+                    border-radius: 8px;
+                    color: {text_color};
+                    padding: 32px 16px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                }}
+            """
+            )
+        else:
+            # Fallback styling with better contrast
+            placeholder.setStyleSheet(
+                """
+                QLabel {
+                    background-color: #f8f9fa;
+                    border: 2px dashed #dee2e6;
+                    border-radius: 8px;
+                    color: #212529;
+                    padding: 32px 16px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                }
+            """
+            )
+
+            # Add placeholder to layout with error handling
+        try:
+            self.preview_area.layout().addWidget(placeholder)
+        except Exception as e:
+            print(f"Error adding placeholder to preview area: {e}")
+            return
 
     def update_generated_code(self, component_name: str, props: Dict[str, Any]):
         """Update the generated code panel."""
@@ -879,11 +657,232 @@ layout.addWidget({component_name.lower()}_widget)
         """Toggle between light and dark theme."""
         if self.polygon_provider:
             self.polygon_provider.toggle_color_scheme()
+            self.apply_modern_styling()
+            # Re-render current component/story to update placeholder colors
+            if self.current_component and self.current_story:
+                self.render_component_placeholder(self.current_story)
 
     def change_primary_color(self, color: str):
         """Change the primary color."""
         if self.polygon_provider:
             self.polygon_provider.update_theme(primary_color=color)
+            self.apply_modern_styling()
+            # Re-render current component/story to update placeholder colors
+            if self.current_component and self.current_story:
+                self.render_component_placeholder(self.current_story)
+
+    def apply_modern_styling(self):
+        """Apply modern styling to all widgets using the enhanced theme system."""
+        print("🎨 Applying modern styling...")
+
+        if not self.polygon_provider:
+            print("❌ No polygon provider found!")
+            return
+
+        theme = self.polygon_provider.theme
+        is_dark = theme.is_dark_mode()
+
+        print(f"🎨 Theme mode: {'Dark' if is_dark else 'Light'}")
+
+        # Apply modern styles to main components
+        try:
+            self.apply_modern_panel_styles(theme, is_dark)
+            print("✅ Panel styles applied")
+        except Exception as e:
+            print(f"❌ Panel styling failed: {e}")
+
+        try:
+            self.apply_modern_button_styles(theme)
+            print("✅ Button styles applied")
+        except Exception as e:
+            print(f"❌ Button styling failed: {e}")
+
+        try:
+            self.apply_modern_input_styles(theme, is_dark)
+            print("✅ Input styles applied")
+        except Exception as e:
+            print(f"❌ Input styling failed: {e}")
+
+        try:
+            self.apply_modern_text_styles(theme, is_dark)
+            print("✅ Text styles applied")
+        except Exception as e:
+            print(f"❌ Text styling failed: {e}")
+
+        try:
+            self.apply_preview_area_styles(theme, is_dark)
+            print("✅ Preview area styles applied")
+        except Exception as e:
+            print(f"❌ Preview area styling failed: {e}")
+
+        print("🎨 Styling application complete!")
+
+    def apply_modern_panel_styles(self, theme, is_dark):
+        """Apply modern styling to panels and containers."""
+        # Left panel styling - TESTING with distinct color
+        if hasattr(self, "left_panel"):
+            self.left_panel.setStyleSheet(
+                f"""
+                QWidget {{
+                    background-color: #E3F2FD;  /* Light blue - TESTING */
+                    border-right: 1px solid {theme.colors.get_border(is_dark)};
+                    padding: {theme.spacing.get_padding('4')};
+                }}
+            """
+            )
+            print("🎨 Applied light blue background to left panel - TESTING")
+
+        # Right panel styling - TESTING with distinct color
+        if hasattr(self, "right_panel"):
+            self.right_panel.setStyleSheet(
+                f"""
+                QWidget {{
+                    background-color: #E8F5E8;  /* Light green - TESTING */
+                    padding: {theme.spacing.get_padding('4')};
+                }}
+            """
+            )
+            print("🎨 Applied light green background to right panel - TESTING")
+
+        # Center panel styling - TESTING with distinct color
+        if hasattr(self, "center_panel"):
+            self.center_panel.setStyleSheet(
+                f"""
+                QWidget {{
+                    background-color: #FFF3E0;  /* Light orange - TESTING */
+                    padding: {theme.spacing.get_padding('4')};
+                }}
+            """
+            )
+            print("🎨 Applied light orange background to center panel - TESTING")
+
+    def apply_modern_button_styles(self, theme):
+        """Apply modern button styling."""
+        # Theme toggle button
+        if hasattr(self, "theme_toggle"):
+            self.theme_toggle.setStyleSheet(theme.get_button_style("secondary", "sm"))
+
+    def apply_modern_input_styles(self, theme, is_dark):
+        """Apply modern input field styling."""
+        # Search box
+        if hasattr(self, "search_box"):
+            self.search_box.setStyleSheet(theme.get_input_style())
+
+        # Dropdown combos
+        if hasattr(self, "primary_color_combo"):
+            self.primary_color_combo.setStyleSheet(theme.get_input_style())
+
+        if hasattr(self, "story_combo"):
+            self.story_combo.setStyleSheet(theme.get_input_style())
+
+        # Component list
+        if hasattr(self, "component_list"):
+            surface_color = theme.colors.get_surface(is_dark)
+            border_color = theme.colors.get_border(is_dark)
+            text_color = theme.colors.get_text(is_dark)
+            primary_color = theme.get_primary_color()
+
+            self.component_list.setStyleSheet(
+                f"""
+                QListWidget {{
+                    border: 1px solid {border_color};
+                    border-radius: 8px;
+                    background-color: {surface_color};
+                    padding: 4px;
+                }}
+                QListWidget::item {{
+                    padding: 12px 16px;
+                    margin: 2px 0px;
+                    border-radius: 6px;
+                    background-color: {surface_color};
+                    color: {text_color};
+                    font-size: 14px;
+                }}
+                QListWidget::item:hover {{
+                    background-color: {theme.colors.get_color('gray', is_dark and 2 or 1)};
+                }}
+                QListWidget::item:selected {{
+                    background-color: {primary_color};
+                    color: #ffffff;
+                }}
+            """
+            )
+
+    def apply_modern_text_styles(self, theme, is_dark):
+        """Apply modern text styling."""
+        text_color = theme.colors.get_text(is_dark)
+        secondary_color = theme.colors.get_text_secondary(is_dark)
+        primary_color = theme.get_primary_color()
+        border_color = theme.colors.get_border(is_dark)
+
+        # Headers
+        if hasattr(self, "components_header"):
+            self.components_header.setStyleSheet(
+                f"""
+                QLabel {{
+                    font-size: {theme.typography.get_font_size('lg')}px;
+                    font-weight: {theme.typography.get_font_weight('semibold')};
+                    color: {text_color};
+                    padding-bottom: {theme.spacing.get_padding('2')};
+                    border-bottom: 2px solid {primary_color};
+                    margin-bottom: {theme.spacing.get_margin('3')};
+                    font-family: {theme.typography.get_font_family('sans')};
+                }}
+            """
+            )
+
+        # Component and story labels
+        if hasattr(self, "component_title"):
+            self.component_title.setStyleSheet(
+                f"""
+                QLabel {{
+                    font-size: {theme.typography.get_font_size('xl')}px;
+                    font-weight: {theme.typography.get_font_weight('bold')};
+                    color: {text_color};
+                    margin: {theme.spacing.get_margin('3')} 0;
+                    font-family: {theme.typography.get_font_family('sans')};
+                }}
+            """
+            )
+
+        # Sub-headers
+        for label_name in [
+            "story_label",
+            "primary_label",
+            "props_label",
+            "docs_label",
+            "code_label",
+        ]:
+            if hasattr(self, label_name):
+                label = getattr(self, label_name)
+                label.setStyleSheet(
+                    f"""
+                    QLabel {{
+                        font-size: {theme.typography.get_font_size('base')}px;
+                        font-weight: {theme.typography.get_font_weight('medium')};
+                        color: {secondary_color};
+                        margin-bottom: {theme.spacing.get_margin('1')};
+                        font-family: {theme.typography.get_font_family('sans')};
+                    }}
+                """
+                )
+
+    def apply_preview_area_styles(self, theme, is_dark):
+        """Apply modern styling to preview area."""
+        if hasattr(self, "preview_area"):
+            border_color = theme.colors.get_border(is_dark)
+            surface_color = theme.colors.get_surface(is_dark)
+
+            self.preview_area.setStyleSheet(
+                f"""
+                QWidget {{
+                    border: 2px dashed {border_color};
+                    border-radius: 8px;
+                    background-color: {surface_color};
+                    margin: 8px 0px;
+                }}
+            """
+            )
 
 
 class PolyBookApp:

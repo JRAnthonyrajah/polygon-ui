@@ -3,7 +3,7 @@ Modern component styling system for Polygon UI.
 Provides consistent styling for all UI components with theme support.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 
@@ -80,7 +80,7 @@ class Transitions:
 
 
 class ComponentStyles:
-    """Main component styling system."""
+    """Main component styling system with Mantine-style component overrides."""
 
     def __init__(
         self,
@@ -88,11 +88,456 @@ class ComponentStyles:
         border_radius: Optional[BorderRadius] = None,
         shadows: Optional[Shadows] = None,
         transitions: Optional[Transitions] = None,
+        component_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
     ):
         self.colors = colors
         self.border_radius = border_radius or BorderRadius()
         self.shadows = shadows or Shadows()
         self.transitions = transitions or Transitions()
+        self.component_overrides = component_overrides or {}
+        self._default_components = self._create_default_components()
+
+    def _create_default_components(self) -> Dict[str, Dict[str, Any]]:
+        """Create default component configurations following Mantine patterns."""
+        return {
+            "Button": {
+                "defaultProps": {
+                    "variant": "filled",
+                    "size": "sm",
+                    "color": "blue",
+                    "radius": "sm",
+                },
+                "styles": {
+                    "root": {
+                        "display": "inline-flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "border": "1px solid",
+                        "fontFamily": "var(--mantine-font-family)",
+                        "fontWeight": 600,
+                        "cursor": "pointer",
+                        "outline": "none",
+                        "transition": "var(--mantine-transition-all)",
+                        "userSelect": "none",
+                        "boxSizing": "border-box",
+                    },
+                    "label": {
+                        "display": "block",
+                        "whiteSpace": "nowrap",
+                        "overflow": "hidden",
+                        "textOverflow": "ellipsis",
+                    },
+                    "loader": {},
+                    "section": {
+                        "display": "flex",
+                        "alignItems": "center",
+                    },
+                    "inner": {
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                    },
+                },
+                "variants": {
+                    "filled": {
+                        "backgroundColor": "var(--mantine-color-filled)",
+                        "color": "var(--mantine-color-filled-color)",
+                        "borderColor": "var(--mantine-color-filled)",
+                        "&:hover": {
+                            "backgroundColor": "var(--mantine-color-filled-hover)",
+                            "borderColor": "var(--mantine-color-filled-hover)",
+                        },
+                    },
+                    "light": {
+                        "backgroundColor": "var(--mantine-color-light)",
+                        "color": "var(--mantine-color-light-color)",
+                        "borderColor": "transparent",
+                        "&:hover": {
+                            "backgroundColor": "var(--mantine-color-light-hover)",
+                        },
+                    },
+                    "outline": {
+                        "backgroundColor": "transparent",
+                        "color": "var(--mantine-color-outline)",
+                        "borderColor": "var(--mantine-color-outline)",
+                        "&:hover": {
+                            "backgroundColor": "var(--mantine-color-outline-hover)",
+                        },
+                    },
+                    "default": {
+                        "backgroundColor": "var(--mantine-color-default)",
+                        "color": "var(--mantine-color-default-color)",
+                        "borderColor": "var(--mantine-color-default-border)",
+                        "&:hover": {
+                            "backgroundColor": "var(--mantine-color-default-hover)",
+                        },
+                    },
+                    "white": {
+                        "backgroundColor": "var(--mantine-color-white)",
+                        "color": "var(--mantine-color-black)",
+                        "borderColor": "var(--mantine-color-default-border)",
+                        "&:hover": {
+                            "backgroundColor": "var(--mantine-color-gray-0)",
+                        },
+                    },
+                    "subtle": {
+                        "backgroundColor": "transparent",
+                        "color": "var(--mantine-color-text)",
+                        "borderColor": "transparent",
+                        "&:hover": {
+                            "backgroundColor": "var(--mantine-color-gray-0)",
+                        },
+                    },
+                },
+                "sizes": {
+                    "xs": {
+                        "height": "var(--button-height-xs)",
+                        "minHeight": "var(--button-height-xs)",
+                        "padding": "0 var(--button-padding-x-xs)",
+                        "fontSize": "var(--mantine-font-size-xs)",
+                    },
+                    "sm": {
+                        "height": "var(--button-height-sm)",
+                        "minHeight": "var(--button-height-sm)",
+                        "padding": "0 var(--button-padding-x-sm)",
+                        "fontSize": "var(--mantine-font-size-sm)",
+                    },
+                    "md": {
+                        "height": "var(--button-height-md)",
+                        "minHeight": "var(--button-height-md)",
+                        "padding": "0 var(--button-padding-x-md)",
+                        "fontSize": "var(--mantine-font-size-md)",
+                    },
+                    "lg": {
+                        "height": "var(--button-height-lg)",
+                        "minHeight": "var(--button-height-lg)",
+                        "padding": "0 var(--button-padding-x-lg)",
+                        "fontSize": "var(--mantine-font-size-lg)",
+                    },
+                    "xl": {
+                        "height": "var(--button-height-xl)",
+                        "minHeight": "var(--button-height-xl)",
+                        "padding": "0 var(--button-padding-x-xl)",
+                        "fontSize": "var(--mantine-font-size-xl)",
+                    },
+                },
+            },
+            "TextInput": {
+                "defaultProps": {
+                    "size": "sm",
+                    "radius": "sm",
+                },
+                "styles": {
+                    "root": {
+                        "position": "relative",
+                        "width": "100%",
+                    },
+                    "input": {
+                        "width": "100%",
+                        "height": "var(--input-height)",
+                        "padding": "0 var(--input-padding-x)",
+                        "border": "1px solid",
+                        "borderRadius": "var(--input-radius)",
+                        "fontSize": "var(--mantine-font-size-sm)",
+                        "lineHeight": 1.5,
+                        "backgroundColor": "var(--mantine-color-white)",
+                        "color": "var(--mantine-color-text)",
+                        "outline": "none",
+                        "transition": "var(--mantine-transition-all)",
+                        "&::placeholder": {
+                            "color": "var(--mantine-color-placeholder)",
+                        },
+                        "&:disabled": {
+                            "backgroundColor": "var(--mantine-color-gray-1)",
+                            "color": "var(--mantine-color-gray-5)",
+                            "cursor": "not-allowed",
+                            "opacity": 0.6,
+                        },
+                    },
+                    "label": {
+                        "display": "block",
+                        "marginBottom": "var(--mantine-spacing-xs)",
+                        "fontSize": "var(--mantine-font-size-sm)",
+                        "fontWeight": 500,
+                        "color": "var(--mantine-color-text)",
+                    },
+                    "description": {
+                        "marginTop": "var(--mantine-spacing-xs)",
+                        "fontSize": "var(--mantine-font-size-xs)",
+                        "color": "var(--mantine-color-dimmed)",
+                    },
+                    "error": {
+                        "marginTop": "var(--mantine-spacing-xs)",
+                        "fontSize": "var(--mantine-font-size-xs)",
+                        "color": "var(--mantine-color-error)",
+                    },
+                },
+                "sizes": {
+                    "xs": {
+                        "fontSize": "var(--mantine-font-size-xs)",
+                        "height": "var(--input-height-xs)",
+                        "padding": "0 var(--input-padding-x-xs)",
+                    },
+                    "sm": {
+                        "fontSize": "var(--mantine-font-size-sm)",
+                        "height": "var(--input-height-sm)",
+                        "padding": "0 var(--input-padding-x-sm)",
+                    },
+                    "md": {
+                        "fontSize": "var(--mantine-font-size-md)",
+                        "height": "var(--input-height-md)",
+                        "padding": "0 var(--input-padding-x-md)",
+                    },
+                    "lg": {
+                        "fontSize": "var(--mantine-font-size-lg)",
+                        "height": "var(--input-height-lg)",
+                        "padding": "0 var(--input-padding-x-lg)",
+                    },
+                    "xl": {
+                        "fontSize": "var(--mantine-font-size-xl)",
+                        "height": "var(--input-height-xl)",
+                        "padding": "0 var(--input-padding-x-xl)",
+                    },
+                },
+            },
+            "Card": {
+                "defaultProps": {
+                    "p": "md",
+                    "radius": "sm",
+                    "withBorder": True,
+                },
+                "styles": {
+                    "root": {
+                        "backgroundColor": "var(--mantine-color-white)",
+                        "border": "1px solid var(--mantine-color-default-border)",
+                        "borderRadius": "var(--mantine-radius-default)",
+                        "padding": "var(--mantine-spacing-md)",
+                        "position": "relative",
+                        "transition": "var(--mantine-transition-all)",
+                    },
+                    "section": {
+                        "&:not(:last-of-type)": {
+                            "borderBottom": "1px solid var(--mantine-color-default-border)",
+                        },
+                    },
+                },
+            },
+            "Badge": {
+                "defaultProps": {
+                    "variant": "light",
+                    "size": "sm",
+                    "radius": "sm",
+                },
+                "styles": {
+                    "root": {
+                        "display": "inline-flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "padding": "0 var(--badge-padding-x)",
+                        "borderRadius": "var(--mantine-radius-sm)",
+                        "fontSize": "var(--mantine-font-size-xs)",
+                        "fontWeight": 700,
+                        "lineHeight": 1,
+                        "whiteSpace": "nowrap",
+                        "height": "var(--badge-height)",
+                        "userSelect": "none",
+                    },
+                    "leftSection": {
+                        "marginRight": "var(--mantine-spacing-xs)",
+                    },
+                    "rightSection": {
+                        "marginLeft": "var(--mantine-spacing-xs)",
+                    },
+                },
+                "variants": {
+                    "filled": {
+                        "backgroundColor": "var(--mantine-color-filled)",
+                        "color": "var(--mantine-color-filled-color)",
+                    },
+                    "light": {
+                        "backgroundColor": "var(--mantine-color-light)",
+                        "color": "var(--mantine-color-light-color)",
+                    },
+                    "outline": {
+                        "backgroundColor": "transparent",
+                        "color": "var(--mantine-color-outline)",
+                        "border": "1px solid var(--mantine-color-outline)",
+                    },
+                    "default": {
+                        "backgroundColor": "var(--mantine-color-default)",
+                        "color": "var(--mantine-color-default-color)",
+                    },
+                    "dot": {
+                        "padding": 0,
+                        "backgroundColor": "var(--mantine-color-filled)",
+                        "color": "var(--mantine-color-filled-color)",
+                        "borderRadius": "var(--mantine-radius-xl)",
+                    },
+                },
+            },
+        }
+
+    def get_component_config(self, component_name: str) -> Dict[str, Any]:
+        """
+        Get component configuration with overrides applied.
+
+        Args:
+            component_name: Name of the component (e.g., 'Button', 'TextInput')
+
+        Returns:
+            Component configuration dictionary
+        """
+        # Start with default configuration
+        config = self._default_components.get(component_name, {}).copy()
+
+        # Apply user overrides
+        if component_name in self.component_overrides:
+            self._deep_merge(config, self.component_overrides[component_name])
+
+        return config
+
+    def override_component(
+        self, component_name: str, overrides: Dict[str, Any]
+    ) -> None:
+        """
+        Override component styles and props.
+
+        Args:
+            component_name: Name of the component
+            overrides: Override configuration
+        """
+        if component_name not in self.component_overrides:
+            self.component_overrides[component_name] = {}
+
+        self._deep_merge(self.component_overrides[component_name], overrides)
+
+    def get_component_styles(self, component_name: str) -> Dict[str, Dict[str, Any]]:
+        """Get component styles dictionary."""
+        config = self.get_component_config(component_name)
+        return config.get("styles", {})
+
+    def get_component_variants(self, component_name: str) -> Dict[str, Dict[str, Any]]:
+        """Get component variants dictionary."""
+        config = self.get_component_config(component_name)
+        return config.get("variants", {})
+
+    def get_component_sizes(self, component_name: str) -> Dict[str, Dict[str, Any]]:
+        """Get component sizes dictionary."""
+        config = self.get_component_config(component_name)
+        return config.get("sizes", {})
+
+    def get_component_default_props(self, component_name: str) -> Dict[str, Any]:
+        """Get component default props."""
+        config = self.get_component_config(component_name)
+        return config.get("defaultProps", {})
+
+    def generate_css_variables(self) -> Dict[str, str]:
+        """
+        Generate all CSS variables for components.
+
+        Returns:
+            Dictionary of CSS variable names to values
+        """
+        css_vars = {}
+
+        # Button variables
+        css_vars.update(
+            {
+                "--button-height-xs": "22px",
+                "--button-height-sm": "30px",
+                "--button-height-md": "38px",
+                "--button-height-lg": "46px",
+                "--button-height-xl": "54px",
+                "--button-padding-x-xs": "10px",
+                "--button-padding-x-sm": "14px",
+                "--button-padding-x-md": "18px",
+                "--button-padding-x-lg": "22px",
+                "--button-padding-x-xl": "26px",
+            }
+        )
+
+        # Input variables
+        css_vars.update(
+            {
+                "--input-height-xs": "26px",
+                "--input-height-sm": "34px",
+                "--input-height-md": "42px",
+                "--input-height-lg": "50px",
+                "--input-height-xl": "58px",
+                "--input-padding-x-xs": "10px",
+                "--input-padding-x-sm": "12px",
+                "--input-padding-x-md": "14px",
+                "--input-padding-x-lg": "16px",
+                "--input-padding-x-xl": "18px",
+            }
+        )
+
+        # Badge variables
+        css_vars.update(
+            {
+                "--badge-height": "16px",
+                "--badge-padding-x": "6px",
+            }
+        )
+
+        return css_vars
+
+    def _deep_merge(self, base: Dict[str, Any], override: Dict[str, Any]) -> None:
+        """
+        Deep merge two dictionaries.
+
+        Args:
+            base: Base dictionary to merge into
+            override: Override dictionary to merge from
+        """
+        for key, value in override.items():
+            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                self._deep_merge(base[key], value)
+            else:
+                base[key] = value
+
+    def reset_component_overrides(self, component_name: str = None) -> None:
+        """
+        Reset component overrides.
+
+        Args:
+            component_name: Specific component to reset, or None to reset all
+        """
+        if component_name:
+            self.component_overrides.pop(component_name, None)
+        else:
+            self.component_overrides.clear()
+
+    def get_all_component_names(self) -> List[str]:
+        """Get list of all available component configurations."""
+        return list(self._default_components.keys()) + list(
+            self.component_overrides.keys()
+        )
+
+    def validate_component_config(self, component_name: str) -> List[str]:
+        """
+        Validate component configuration.
+
+        Args:
+            component_name: Name of the component to validate
+
+        Returns:
+            List of validation errors (empty if valid)
+        """
+        errors = []
+        config = self.get_component_config(component_name)
+
+        # Check for required sections
+        if "styles" not in config:
+            errors.append(f"Component '{component_name}' missing 'styles' section")
+
+        # Validate styles structure
+        if "styles" in config:
+            styles = config["styles"]
+            if "root" not in styles:
+                errors.append(f"Component '{component_name}' missing 'root' style")
+
+        return errors
 
     def get_button_style(
         self, variant: str = "primary", size: str = "md", state: str = "default"

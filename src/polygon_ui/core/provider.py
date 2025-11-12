@@ -10,10 +10,42 @@ from ..styles.qss_generator import QSSGenerator
 class PolygonProvider:
     """Provides theme management and QSS generation for Polygon UI applications."""
 
+    _instance: Optional['PolygonProvider'] = None
+    _initialized: bool = False
+
     def __init__(self, theme: Theme):
+        if PolygonProvider._instance is not None:
+            raise RuntimeError("PolygonProvider is a singleton. Use get_instance() instead.")
+
         self.theme = theme
         self._theme_provider = self  # For compatibility
         self._settings = QSettings("PolygonUI", "PolyBook")
+
+        PolygonProvider._instance = self
+        PolygonProvider._initialized = True
+
+    @classmethod
+    def get_instance(cls) -> Optional['PolygonProvider']:
+        """Get the singleton instance of PolygonProvider."""
+        return cls._instance
+
+    @classmethod
+    def is_initialized(cls) -> bool:
+        """Check if PolygonProvider has been initialized."""
+        return cls._initialized
+
+    @classmethod
+    def initialize(cls, theme: Theme) -> 'PolygonProvider':
+        """Initialize the singleton PolygonProvider with a theme."""
+        if cls._instance is None:
+            return cls(theme)
+        return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset the singleton instance (useful for testing)."""
+        cls._instance = None
+        cls._initialized = False
 
     def _load_preferences(self) -> None:
         """Load saved theme preferences."""

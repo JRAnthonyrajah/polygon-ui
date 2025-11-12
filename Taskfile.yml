@@ -1,0 +1,77 @@
+version: "3"
+
+tasks:
+  setup:
+    desc: Setup project with pyenv, virtualenv, and poetry
+    cmds:
+      - pyenv install --skip-existing 3.11
+      - pyenv local 3.11
+      - pyenv virtualenv --force 3.11 polygon-ui-env
+      - pyenv local polygon-ui-env
+      - poetry env use $(pyenv which python)
+      - poetry install
+
+  clean:
+    desc: Remove poetry virtualenv
+    cmds:
+      - poetry env remove $(poetry env list --full-path | grep Activated || echo "none")
+    ignore_error: true
+
+  run:
+    desc: Run the app entrypoint
+    cmds:
+      - poetry run python -m polygon_ui.main
+
+  shell:
+    desc: Open a Poetry shell
+    cmds:
+      - poetry shell
+
+  test:
+    desc: Run tests with pytest
+    cmds:
+      - poetry run pytest
+
+  test-watch:
+    desc: Run tests in watch mode
+    cmds:
+      - poetry run ptw --runner "pytest"
+
+  coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - poetry run pytest --cov=src/polygon_ui --cov-report=html --cov-report=term
+
+  lint:
+    desc: Run all linting checks
+    cmds:
+      - task: lint:ruff
+      - task: lint:mypy
+      - task: lint:black-check
+
+  lint:ruff:
+    desc: Run ruff linter
+    cmds:
+      - poetry run ruff check .
+
+  lint:mypy:
+    desc: Run mypy type checker
+    cmds:
+      - poetry run mypy src/
+
+  lint:black-check:
+    desc: Check code formatting with Black
+    cmds:
+      - poetry run black --check .
+
+  format:
+    desc: Format code with Black
+    cmds:
+      - poetry run black .
+
+  fix:
+    desc: Auto-fix linting issues
+    cmds:
+      - poetry run ruff check --fix .
+      - poetry run black .
+

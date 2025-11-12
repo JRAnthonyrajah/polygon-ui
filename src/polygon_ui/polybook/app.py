@@ -88,10 +88,10 @@ class PolyBookMainWindow(QMainWindow):
         layout.setSpacing(12)
 
         # Header
-        header = QLabel("Components")
+        self.components_header = QLabel("Components")
         # Theme-aware styling will be applied in apply_theme_styling
-        header.setProperty("class", "header")
-        header.setStyleSheet(
+        self.components_header.setProperty("class", "header")
+        self.components_header.setStyleSheet(
             """
             QLabel[class="header"] {
                 font-size: 16px;
@@ -102,7 +102,7 @@ class PolyBookMainWindow(QMainWindow):
             }
         """
         )
-        layout.addWidget(header)
+        layout.addWidget(self.components_header)
 
         # Search box
         self.search_box = QLineEdit()
@@ -488,22 +488,20 @@ class PolyBookMainWindow(QMainWindow):
                 """
             )
 
-        # Find and update the Components header label
-        for widget in self.findChildren(QLabel):
-            if widget.text() == "Components":
-                widget.setStyleSheet(
-                    f"""
-                    QLabel[class="header"] {{
-                        font-size: 16px;
-                        font-weight: 600;
-                        padding: 8px 0px;
-                        border-bottom: 2px solid {border_color};
-                        margin-bottom: 8px;
-                        color: {text_color} !important;
-                    }}
-                    """
-                )
-                break
+        # Apply theme color to Components header label
+        if hasattr(self, "components_header"):
+            self.components_header.setStyleSheet(
+                f"""
+                QLabel[class="header"] {{
+                    font-size: 16px;
+                    font-weight: 600;
+                    padding: 8px 0px;
+                    border-bottom: 2px solid {border_color};
+                    margin-bottom: 8px;
+                    color: {text_color} !important;
+                }}
+                """
+            )
 
         # Set comprehensive theme styling
         self.setStyleSheet(

@@ -25,6 +25,7 @@ def apply_widget_styles(self):
             \"\"\"
         )
 
+
         # Search box
         self.search_box.setStyleSheet(
             f\"\"\"
@@ -42,6 +43,7 @@ def apply_widget_styles(self):
             }}
             \"\"\"
         )
+
 
         # Component list
         self.component_list.setStyleSheet(
@@ -66,6 +68,7 @@ def apply_widget_styles(self):
             \"\"\"
         )
 
+
         # Primary color combo
         self.primary_color_combo.setStyleSheet(
             f\"\"\"
@@ -83,6 +86,7 @@ def apply_widget_styles(self):
             }}
             \"\"\"
         )
+
 
         # Story combo
         self.story_combo.setStyleSheet(
@@ -115,6 +119,7 @@ def apply_widget_styles(self):
             \"\"\"
         )
 
+
         # Preview area
         self.preview_area.setStyleSheet(
             f\"\"\"
@@ -126,6 +131,7 @@ def apply_widget_styles(self):
             }}
             \"\"\"
         )
+
 
         # Docs text
         self.docs_text.setStyleSheet(
@@ -146,6 +152,7 @@ def apply_widget_styles(self):
             \"\"\"
         )
 
+
         # Code text
         self.code_text.setStyleSheet(
             f\"\"\"
@@ -165,6 +172,7 @@ def apply_widget_styles(self):
             }}
             \"\"\"
         )
+
 
         # Theme toggle (specific hover/pressed shades)
         primary = theme.get_primary_color()
@@ -191,3 +199,4 @@ def apply_widget_styles(self):
             }}
             \"\"\"
         )
+

@@ -477,28 +477,44 @@ class PolyBookMainWindow(QMainWindow):
 
         # Apply colors directly to specific labels to override any hardcoded styles
         if hasattr(self, "component_title"):
+            # Use explicit high-contrast colors based on theme
+            if is_dark:
+                title_color = "#ffffff"  # White text for dark theme
+            else:
+                title_color = "#212529"  # Dark text for light theme
+
             self.component_title.setStyleSheet(
                 f"""
-                QLabel[class="component-title"] {{
+                QLabel {{
                     font-size: 18px;
                     font-weight: 600;
                     padding: 0px;
-                    color: {text_color} !important;
+                    color: {title_color} !important;
+                    background-color: transparent !important;
                 }}
                 """
             )
 
-        # Apply theme color to Components header label
+        # Apply theme color to Components header label with forceful styling
         if hasattr(self, "components_header"):
+            # Use explicit high-contrast colors based on theme
+            if is_dark:
+                label_color = "#ffffff"  # White text for dark theme
+                border_col = "#495057"  # Lighter border for dark theme
+            else:
+                label_color = "#212529"  # Dark text for light theme
+                border_col = "#dee2e6"  # Standard border for light theme
+
             self.components_header.setStyleSheet(
                 f"""
-                QLabel[class="header"] {{
+                QLabel {{
                     font-size: 16px;
                     font-weight: 600;
                     padding: 8px 0px;
-                    border-bottom: 2px solid {border_color};
+                    border-bottom: 2px solid {border_col};
                     margin-bottom: 8px;
-                    color: {text_color} !important;
+                    color: {label_color} !important;
+                    background-color: transparent !important;
                 }}
                 """
             )

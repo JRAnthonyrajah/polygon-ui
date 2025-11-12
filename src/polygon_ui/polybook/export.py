@@ -17,7 +17,9 @@ class Exporter:
     """
 
     @staticmethod
-    def export_code_snippet(component_name: str, props: Dict[str, Any], theme: Dict[str, Any]) -> str:
+    def export_code_snippet(
+        component_name: str, props: Dict[str, Any], theme: Dict[str, Any]
+    ) -> str:
         """
         Generate and export Python code snippet for a component.
 
@@ -51,6 +53,7 @@ component = {component_name}("Example", **{props})
             str: Theme config string.
         """
         import json
+
         return json.dumps(theme, indent=2)
 
     @staticmethod
@@ -67,13 +70,18 @@ component = {component_name}("Example", **{props})
             bool: Success status.
         """
         file_path, _ = QFileDialog.getSaveFileName(
-            app, "Export File", f"export.{file_type}", f"{file_type.upper()} Files (*.{file_type})"
+            app,
+            "Export File",
+            f"export.{file_type}",
+            f"{file_type.upper()} Files (*.{file_type})",
         )
         if file_path:
             try:
                 with open(file_path, "w") as f:
                     f.write(content)
-                QMessageBox.information(app, "Export Success", f"Exported to {file_path}")
+                QMessageBox.information(
+                    app, "Export Success", f"Exported to {file_path}"
+                )
                 return True
             except Exception as e:
                 QMessageBox.warning(app, "Export Failed", str(e))

@@ -8,9 +8,9 @@ import pytest
 from unittest.mock import patch
 
 # Detect platform
-IS_WINDOWS = sys.platform.startswith('win')
-IS_MACOS = sys.platform == 'darwin'
-IS_LINUX = sys.platform.startswith('linux')
+IS_WINDOWS = sys.platform.startswith("win")
+IS_MACOS = sys.platform == "darwin"
+IS_LINUX = sys.platform.startswith("linux")
 
 from PySide6.QtWidgets import QApplication
 from polygon_ui.polybook.app import PolyBookApp
@@ -25,13 +25,13 @@ def app():
 @pytest.mark.skipif(not IS_WINDOWS, reason="Windows-specific test")
 def test_windows_behavior(app):
     """Test Windows-specific UI behavior."""
-    with patch('PySide6.QtWidgets.QStyleFactory.create', return_value=None):
+    with patch("PySide6.QtWidgets.QStyleFactory.create", return_value=None):
         polybook = PolyBookApp()
         # Test native styles, dialog paths, etc.
         assert polybook is not None
         # Specific: Check for Windows line endings in exports
         code = polybook.generate_code()
-        assert '\\r\\n' not in code  # Ensure cross-platform newlines
+        assert "\\r\\n" not in code  # Ensure cross-platform newlines
 
 
 @pytest.mark.skipif(not IS_MACOS, reason="macOS-specific test")

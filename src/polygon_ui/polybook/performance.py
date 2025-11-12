@@ -71,7 +71,9 @@ class PerformanceMonitor(QObject):
         """Update label texts with new metrics."""
         for key, value in metrics.items():
             if key in self.labels:
-                self.labels[key].setText(f"{key.replace('_', ' ').title()}: {value:.2f}")
+                self.labels[key].setText(
+                    f"{key.replace('_', ' ').title()}: {value:.2f}"
+                )
 
 
 # Integration in app

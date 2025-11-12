@@ -34,7 +34,11 @@ def test_component_selection(polybook_app, qtbot):
     assert item_count > 0, "No components loaded"
 
     # Click first item
-    qtbot.mouseClick(list_widget.viewport(), Qt.LeftButton, pos=list_widget.visualItemRect(list_widget.item(0)).center())
+    qtbot.mouseClick(
+        list_widget.viewport(),
+        Qt.LeftButton,
+        pos=list_widget.visualItemRect(list_widget.item(0)).center(),
+    )
     qtbot.wait(500)
     assert polybook_app.current_component is not None
 
@@ -66,7 +70,11 @@ def test_export_functionality(polybook_app, qtbot):
     """Test export generates code."""
     # Select a component first
     list_widget = polybook_app.component_list
-    qtbot.mouseClick(list_widget.viewport(), Qt.LeftButton, pos=list_widget.visualItemRect(list_widget.item(0)).center())
+    qtbot.mouseClick(
+        list_widget.viewport(),
+        Qt.LeftButton,
+        pos=list_widget.visualItemRect(list_widget.item(0)).center(),
+    )
     qtbot.wait(500)
 
     # Simulate export (mock file dialog if needed)

@@ -15,7 +15,11 @@ class PolyBookLogger:
     """
 
     def __init__(self, log_level: str = "INFO", log_dir: Optional[Path] = None):
-        self.log_dir = log_dir or Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)) / "logs"
+        self.log_dir = (
+            log_dir
+            or Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation))
+            / "logs"
+        )
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Console handler
@@ -25,7 +29,7 @@ class PolyBookLogger:
         # File handler with rotation
         log_file = self.log_dir / f"polybook_{datetime.now().strftime('%Y%m%d')}.log"
         file_handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=10*1024*1024, backupCount=5  # 10MB, 5 backups
+            log_file, maxBytes=10 * 1024 * 1024, backupCount=5  # 10MB, 5 backups
         )
         file_handler.setFormatter(StructuredFormatter())
 
@@ -34,7 +38,13 @@ class PolyBookLogger:
         self.logger.addHandler(console_handler)
         self.logger.addHandler(file_handler)
 
-    def log_event(self, level: str, event: str, details: Dict[str, Any] = None, error: Optional[Exception] = None):
+    def log_event(
+        self,
+        level: str,
+        event: str,
+        details: Dict[str, Any] = None,
+        error: Optional[Exception] = None,
+    ):
         """
         Log structured event.
 
@@ -60,6 +70,7 @@ class PolyBookLogger:
     def _get_traceback(self, error: Exception) -> str:
         """Get error traceback."""
         import traceback
+
         return traceback.format_exc()
 
     def error(self, event: str, error: Exception, details: Dict[str, Any] = None):

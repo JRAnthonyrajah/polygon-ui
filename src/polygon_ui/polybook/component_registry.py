@@ -3,7 +3,7 @@ Component registry for PolyBook.
 """
 
 from typing import Dict, Any, Type, Callable, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -67,7 +67,7 @@ class ComponentRegistry:
             self._categories[category].append(name)
 
         # Update tags index if needed (for future search)
-        if not hasattr(self, '_tags'):
+        if not hasattr(self, "_tags"):
             self._tags = {}
         for tag in tags or []:
             tag_lower = tag.lower()

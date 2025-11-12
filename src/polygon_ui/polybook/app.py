@@ -102,6 +102,7 @@ class PolyBookMainWindow(QMainWindow):
             }
         """
         )
+
         layout.addWidget(self.components_header)
 
         # Search box
@@ -505,8 +506,7 @@ class PolyBookMainWindow(QMainWindow):
                 label_color = "#212529"  # Dark text for light theme
                 border_col = "#dee2e6"  # Standard border for light theme
 
-            self.components_header.setStyleSheet(
-                f"""
+            new_stylesheet = f"""
                 QLabel {{
                     font-size: 16px;
                     font-weight: 600;
@@ -517,11 +517,10 @@ class PolyBookMainWindow(QMainWindow):
                     background-color: transparent !important;
                 }}
                 """
-            )
+            self.components_header.setStyleSheet(new_stylesheet)
 
         # Set comprehensive theme styling
-        self.setStyleSheet(
-            f"""
+        stylesheet = f"""
             QMainWindow {{
                 background-color: {bg_color};
             }}
@@ -612,7 +611,7 @@ class PolyBookMainWindow(QMainWindow):
                 border-color: {theme.colors.get_color(theme.primary_color, 8 if not is_dark else 4)};
             }}
         """
-        )
+        self.setStyleSheet(stylesheet)
 
     def toggle_theme(self):
         """Toggle between light and dark theme."""

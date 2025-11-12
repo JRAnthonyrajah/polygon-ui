@@ -106,7 +106,7 @@ class QSSGenerator:
             qss_parts.extend(f"  {prop}" for prop in style_props)
             qss_parts.append("}")
 
-        # Handle states (hover, active, disabled, etc.)
+        # Always generate states for better UX
         state_styles = self._generate_state_styles(component_name, props, theme)
         if state_styles:
             qss_parts.append(state_styles)
@@ -157,7 +157,7 @@ class QSSGenerator:
             "}",
             "",
             "QPushButton:pressed {",
-            "  background-color: rgba(0, 0, 0, 0.1);",
+            f"  background-color: rgba(0, 0, 0, 0.1) if theme.color_scheme == ColorScheme.LIGHT else rgba(255, 255, 255, 0.1);",
             "}",
         ]
 
@@ -187,7 +187,7 @@ class QSSGenerator:
                 "QPushButton[class='primary'] {",
                 f"  background-color: {primary_color};",
                 f"  border: 1px solid {primary_color};",
-                "  color: white;",
+                f"  color: {theme.get_color('white', 0)};",
                 "  padding: 8px 16px;",
                 f"  border-radius: {theme.get_radius('md')}px;",
                 "}",
@@ -416,38 +416,48 @@ class QSSGenerator:
     def _generate_state_styles(
         self, component_name: str, props: Dict[str, Any], theme: Theme
     ) -> Optional[str]:
-        """Generate state-specific styles (hover, active, disabled, etc.)."""
+        """Generate state-specific styles (hover, active, disabled, focus, etc.)."""
         state_styles = []
 
-        # Hover state
-        hover_props = props.get(":hover", {})
-        if hover_props:
-            hover_qss = self.generate_component_qss(component_name, hover_props, theme)
-            hover_qss = hover_qss.replace(
-                f".{component_name}", f".{component_name}:hover"
-            )
-            state_styles.append(hover_qss)
+        state_map = {
+            ":hover": ":hover",
+            ":active": ":pressed",
+            ":disabled": ":disabled",
+            ":focus": ":focus",
+        }
 
-        # Active state
-        active_props = props.get(":active", {})
-        if active_props:
-            active_qss = self.generate_component_qss(
-                component_name, active_props, theme
-            )
-            active_qss = active_qss.replace(
-                f".{component_name}", f".{component_name}:pressed"
-            )
-            state_styles.append(active_qss)
+        for prop_key, qss_selector in state_map.items():
+            state_props = props.get(prop_key, {})
+            if (
+                state_props or prop_key == ":focus"
+            ):  # Auto-generate focus if not specified
+                if not state_props:
+                    # Default focus: use theme focus_ring
+                    focus_props = {
+                        "border": f"2px solid {theme.get_primary_color()}",
+                        "outline": "none",
+                    }
+                    state_props = focus_props
+                state_qss = self.generate_component_qss(
+                    component_name, state_props, theme
+                )
+                state_qss = state_qss.replace(
+                    f".{component_name}", f".{component_name}{qss_selector}"
+                )
+                state_styles.append(state_qss)
 
-        # Disabled state
-        disabled_props = props.get(":disabled", {})
-        if disabled_props:
-            disabled_qss = self.generate_component_qss(
-                component_name, disabled_props, theme
+        # Variant-based hover darkening (if variant='filled')
+        if props.get("variant") == "filled":
+            primary = theme.get_primary_color()
+            darker = theme.colors.get_color(
+                theme.primary_color,
+                theme.primary_shade + 1 if isinstance(theme.primary_shade, int) else 7,
             )
-            disabled_qss = disabled_qss.replace(
-                f".{component_name}", f".{component_name}:disabled"
-            )
-            state_styles.append(disabled_qss)
+            hover_state = f"""
+.{component_name}:hover {{
+    background-color: {darker};
+}}
+"""
+            state_styles.append(hover_state)
 
         return "\n\n".join(filter(None, state_styles)) if state_styles else None

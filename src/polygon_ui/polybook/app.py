@@ -114,11 +114,8 @@ class PolyBookMainWindow(QMainWindow):
                 border: 2px solid #e1e5e9;
                 border-radius: 8px;
                 font-size: 14px;
-                background-color: #ffffff;
-                color: #495057;
             }
             QLineEdit:focus {
-                border-color: #228be6;
                 outline: none;
             }
         """
@@ -133,23 +130,13 @@ class PolyBookMainWindow(QMainWindow):
             QListWidget {
                 border: 1px solid #e1e5e9;
                 border-radius: 8px;
-                background-color: #ffffff;
                 padding: 4px;
             }
             QListWidget::item {
                 padding: 12px 16px;
                 margin: 2px 0px;
                 border-radius: 6px;
-                background-color: #f8f9fa;
-                color: #495057;
                 font-size: 14px;
-            }
-            QListWidget::item:hover {
-                background-color: #e3f2fd;
-            }
-            QListWidget::item:selected {
-                background-color: #228be6;
-                color: #ffffff;
             }
         """
         )
@@ -208,7 +195,6 @@ class PolyBookMainWindow(QMainWindow):
             """
             QLabel {
                 font-size: 13px;
-                color: #6c757d;
                 padding-right: 8px;
             }
         """
@@ -222,12 +208,10 @@ class PolyBookMainWindow(QMainWindow):
                 padding: 6px 10px;
                 border: 2px solid #e1e5e9;
                 border-radius: 6px;
-                background-color: #ffffff;
                 font-size: 13px;
-                color: #495057;
             }
             QComboBox:focus {
-                border-color: #228be6;
+                outline: none;
             }
         """
         )
@@ -255,7 +239,6 @@ class PolyBookMainWindow(QMainWindow):
             QLabel {
                 font-size: 18px;
                 font-weight: 600;
-                color: #1a1a1a;
                 padding: 0px;
             }
         """
@@ -270,7 +253,6 @@ class PolyBookMainWindow(QMainWindow):
             """
             QLabel {
                 font-size: 14px;
-                color: #6c757d;
                 padding-right: 8px;
             }
         """
@@ -284,13 +266,11 @@ class PolyBookMainWindow(QMainWindow):
                 padding: 8px 12px;
                 border: 2px solid #e1e5e9;
                 border-radius: 6px;
-                background-color: #ffffff;
                 font-size: 14px;
-                color: #495057;
                 min-width: 150px;
             }
             QComboBox:focus {
-                border-color: #228be6;
+                outline: none;
             }
             QComboBox::drop-down {
                 border: none;
@@ -300,7 +280,7 @@ class PolyBookMainWindow(QMainWindow):
                 image: none;
                 border-left: 5px solid transparent;
                 border-right: 5px solid transparent;
-                border-top: 5px solid #6c757d;
+                border-top: 5px solid currentColor;
                 margin-right: 5px;
             }
         """
@@ -335,7 +315,6 @@ class PolyBookMainWindow(QMainWindow):
             QWidget {
                 border: 2px dashed #dee2e6;
                 border-radius: 8px;
-                background-color: #f8f9fa;
                 margin: 8px 0px;
             }
         """
@@ -406,14 +385,12 @@ class PolyBookMainWindow(QMainWindow):
             QTextEdit {
                 border: 1px solid #e1e5e9;
                 border-radius: 6px;
-                background-color: #f8f9fa;
-                color: #495057;
                 font-size: 13px;
                 padding: 12px;
                 line-height: 1.5;
             }
             QTextEdit:focus {
-                border-color: #228be6;
+                outline: none;
             }
         """
         )
@@ -454,7 +431,7 @@ class PolyBookMainWindow(QMainWindow):
                 line-height: 1.4;
             }
             QTextEdit:focus {
-                border-color: #228be6;
+                outline: none;
             }
         """
         )
@@ -811,10 +788,8 @@ class PolyBookMainWindow(QMainWindow):
         placeholder.setStyleSheet(
             """
             QLabel {
-                background-color: #f8f9fa;
                 border: 2px dashed #dee2e6;
                 border-radius: 8px;
-                color: #495057;
                 padding: 32px 16px;
                 font-size: 14px;
                 line-height: 1.6;

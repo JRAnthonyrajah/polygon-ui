@@ -478,11 +478,7 @@ class PolyBookMainWindow(QMainWindow):
 
         # Apply colors directly to specific labels to override any hardcoded styles
         if hasattr(self, "component_title"):
-            # Use explicit high-contrast colors based on theme
-            if is_dark:
-                title_color = "#ffffff"  # White text for dark theme
-            else:
-                title_color = "#212529"  # Dark text for light theme
+            title_color = text_color
 
             self.component_title.setStyleSheet(
                 f"""

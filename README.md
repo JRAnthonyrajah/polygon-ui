@@ -22,6 +22,10 @@ It uses:
 - ✅ Pre-commit hooks for consistent code formatting
 - 🔄 Automatic versioning with [Commitizen](https://commitizen-tools.github.io/commitizen/)
 - 🧪 Testing with Pytest
+- 🎨 Complete theme system (colors, spacing, typography)
+- 🧩 Modular component architecture for Qt/PySide
+- 🔧 PolyBook - Component development workshop
+- 📱 Mantine-inspired design system for desktop applications
 
 ---
 
@@ -43,11 +47,22 @@ It uses:
 
 ## ⚙️ Usage
 
-- **Run the application:**
+### Application Commands
+- **Run the main application:**
     ```bash
     task run
+    # or
+    poetry run polygon-ui
     ```
 
+- **Launch PolyBook (Component Workshop):**
+    ```bash
+    task polybook
+    # or
+    poetry run polybook
+    ```
+
+### Development Commands
 - **Activate the Poetry shell:**
     ```bash
     task shell
@@ -55,13 +70,44 @@ It uses:
 
 - **Run tests:**
     ```bash
+    task test
+    # or
     poetry run pytest
     ```
 
-- **Run pre-commit checks:**
+- **Run tests in watch mode:**
     ```bash
-    pre-commit run --all-files
+    task test-watch
     ```
+
+- **Run tests with coverage:**
+    ```bash
+    task coverage
+    ```
+
+- **Lint code:**
+    ```bash
+    task lint
+    ```
+
+- **Format code:**
+    ```bash
+    task format
+    ```
+
+- **Fix linting issues:**
+    ```bash
+    task fix
+    ```
+
+### PolyBook Features
+PolyBook provides a powerful development environment for building and testing Polygon UI components:
+- **Component Registry**: Discover and organize components
+- **Live Preview**: Test components with different props in real-time
+- **Story System**: Save and manage component states
+- **Theme Switching**: Toggle between light/dark themes
+- **Props Editor**: Dynamic component property manipulation
+- **Code Generation**: Export component configurations as Python code
 
 ---
 

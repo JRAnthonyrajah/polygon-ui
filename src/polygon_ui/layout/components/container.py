@@ -30,6 +30,9 @@ class Container(LayoutComponent):
         center: bool = True,
         **kwargs: Any,
     ):
+        # Set center before calling super().__init__ because it calls _setup_layout
+        self._center: bool = center
+
         super().__init__(parent=parent, **kwargs)
 
         # Responsive props handler
@@ -40,8 +43,6 @@ class Container(LayoutComponent):
         self._responsive.set("fluid", fluid)
         self._responsive.set("px", px)
         self._responsive.set("py", py)
-
-        self._center: bool = center
 
         # Size breakpoints (Mantine-inspired)
         self._size_map = {
@@ -129,7 +130,7 @@ class Container(LayoutComponent):
         self._update_container_styling()
 
     # Property: px (horizontal padding)
-    @Property(Union[str, int])
+    @Property(object)
     def px(self) -> Union[str, int]:
         """Get the current resolved horizontal padding."""
         return self._responsive.get("px", "md")
@@ -141,7 +142,7 @@ class Container(LayoutComponent):
         self._update_container_styling()
 
     # Property: py (vertical padding)
-    @Property(Union[str, int])
+    @Property(object)
     def py(self) -> Union[str, int]:
         """Get the current resolved vertical padding."""
         return self._responsive.get("py", "md")

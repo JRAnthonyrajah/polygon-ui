@@ -8,7 +8,7 @@ from PySide6.QtGui import QPainter, QImage
 
 def create_test_layout(parent=None):
     """Create a test layout widget with sample children."""
-    from src.polygon_ui.layout.core.base import LayoutComponent
+    from polygon_ui.layout.core.base import LayoutComponent
 
     layout = LayoutComponent(parent)
 

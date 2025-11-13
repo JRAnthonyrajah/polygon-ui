@@ -111,5 +111,98 @@ class TestThemeSwitchingVisualConsistency:
         assert os.path.exists("test_snapshot_light.png")
 
 
+class TestContainerVisualRegression:
+    """Visual regression tests for Container component."""
+
+    @pytest.fixture
+    def app(self):
+        app = QApplication.instance() or QApplication([])
+        yield app
+        app.quit()
+
+    @pytest.mark.skipif(
+        not os.getenv("GUI_TEST"), reason="Requires GUI for visual snapshot"
+    )
+    def test_container_basic_snapshot(self, app):
+        """Basic Container rendering snapshot."""
+        from polygon_ui.layout.components.container import Container
+        from polygon_ui.theme import Theme
+
+        theme = Theme()
+        container = Container(size="md", px="md", py="md", theme=theme)
+        container.setObjectName("test-container")
+
+        # Add child for visibility
+        child = QWidget()
+        child.setStyleSheet("background-color: red; border: 1px solid black;")
+        child.setFixedSize(100, 50)
+        container.layout().addWidget(child)
+
+        container.resize(400, 300)
+        container.show()
+        app.processEvents()
+
+        pixmap = QPixmap(container.size())
+        container.render(pixmap)
+        pixmap.save("test_container_basic.png", "PNG")
+        assert os.path.exists("test_container_basic.png")
+
+    @pytest.mark.skipif(
+        not os.getenv("GUI_TEST"), reason="Requires GUI for visual snapshot"
+    )
+    def test_container_fluid_responsive_snapshot(self, app):
+        """Fluid responsive Container snapshot."""
+        from polygon_ui.layout.components.container import Container
+        from polygon_ui.theme import Theme
+
+        theme = Theme()
+        container = Container(fluid=True, size="xl", px="lg", py="lg", theme=theme)
+        container.setObjectName("test-fluid-container")
+
+        # Multiple children
+        for i in range(3):
+            child = QWidget()
+            child.setStyleSheet(f"background-color: blue; border: 1px solid black;")
+            child.setFixedSize(150, 80)
+            container.layout().addWidget(child)
+
+        container.resize(600, 400)
+        container.show()
+        app.processEvents()
+
+        pixmap = QPixmap(container.size())
+        container.render(pixmap)
+        pixmap.save("test_container_fluid_responsive.png", "PNG")
+        assert os.path.exists("test_container_fluid_responsive.png")
+
+    @pytest.mark.skipif(
+        not os.getenv("GUI_TEST"), reason="Requires GUI for visual snapshot"
+    )
+    def test_container_dark_theme_snapshot(self, app):
+        """Container in dark theme snapshot."""
+        from polygon_ui.layout.components.container import Container
+        from polygon_ui.theme import Theme, ColorScheme
+
+        theme = Theme(color_scheme=ColorScheme.DARK)
+        container = Container(size="sm", px="sm", py="sm", theme=theme)
+        container.setObjectName("test-dark-container")
+
+        child = QWidget()
+        child.setStyleSheet("background-color: yellow; border: 1px solid white;")
+        child.setFixedSize(80, 40)
+        container.layout().addWidget(child)
+
+        container.resize(300, 200)
+        container.show()
+        app.processEvents()
+
+        pixmap = QPixmap(container.size())
+        container.render(pixmap)
+        pixmap.save("test_container_dark.png", "PNG")
+        assert os.path.exists("test_container_dark.png")
+
+
 # Run with: GUI_TEST=1 pytest tests/test_visual_regression.py -v
 # For full regression, integrate image diff library like imagehash or loki
+# Note: Snapshots saved for manual visual regression verification.
+# To automate, add image comparison logic using PIL or similar.

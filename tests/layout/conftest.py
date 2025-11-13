@@ -36,7 +36,7 @@ class ResponsiveTestHelper:
 
     def __init__(self, widget):
         self.widget = widget
-        from src.polygon_ui.layout.core.responsive import BreakpointSystem
+        from polygon_ui.layout.core.responsive import BreakpointSystem
 
         self.breakpoint_system = BreakpointSystem
 

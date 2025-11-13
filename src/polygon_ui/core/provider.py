@@ -5,11 +5,6 @@ from PySide6.QtCore import QSettings
 
 from ..theme.theme import ColorScheme, Theme
 from ..styles.qss_generator import QSSGenerator
-from ...layout.utils.qss import (
-    generate_flex_qss,
-    generate_grid_qss,
-    generate_responsive_qss,
-)
 
 
 class PolygonProvider:

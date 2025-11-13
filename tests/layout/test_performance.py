@@ -1,12 +1,12 @@
 import pytest
 import time
-from pytest_benchmark import fixture, benchmark
+from pytest_benchmark import fixture
 from memory_profiler import profile
 
-from src.polygon_ui.layout.core.base import LayoutComponent
-from src.polygon_ui.layout.core.responsive import ResponsiveLayout
-from src.polygon_ui.layout.utils.qss import generate_qss_for_component
-from src.polygon_ui.core.styles import StyleProps
+from polygon_ui.layout.core.base import LayoutComponent
+from polygon_ui.layout.core.responsive import ResponsiveLayout
+from polygon_ui.layout.utils.qss import generate_qss_for_component
+from polygon_ui.core.styles import StyleProps
 
 # Assume Qt is available via conftest.py
 from PySide6.QtWidgets import QApplication

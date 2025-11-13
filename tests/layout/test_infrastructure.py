@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QWidget, QLabel
 
 # Test that the foundation components can be imported and instantiated
-from src.polygon_ui.layout.core.base import (
+from polygon_ui.layout.core.base import (
     LayoutComponent,
     GridComponent,
     UtilityComponent,

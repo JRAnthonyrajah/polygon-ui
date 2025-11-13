@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import QObject, QTimer
 from PySide6.QtTest import QTest  # If needed for events
 
-from src.polygon_ui.layout.core.responsive import (
+from polygon_ui.layout.core.responsive import (
     Breakpoint,
     BreakpointSystem,
     ResponsiveProps,

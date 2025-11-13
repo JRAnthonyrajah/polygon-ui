@@ -94,8 +94,8 @@
 - [ ] **Container testing** (Priority: HIGH)
   - [ ] Write unit tests for all props
   - [ ] Create responsive behavior tests
-  - [ ] Add visual regression tests
-  - [ ] Implement performance benchmarks
+  - [x] Add visual regression tests
+  - [x] Implement performance benchmarks
 
 ### Stack Component
 - [ ] **Create Stack component** (Priority: CRITICAL)
@@ -149,7 +149,7 @@
   - [ ] Write comprehensive flex behavior tests
   - [ ] Test complex flex scenarios
   - [ ] Create performance benchmarks
-  - [ ] Add visual regression tests
+  - [x] Add visual regression tests
 
 ### Box Component
 - [ ] **Create Box component** (Priority: HIGH)
@@ -203,7 +203,7 @@
   - [ ] Write responsive behavior tests
   - [ ] Test column distribution
   - [ ] Create performance benchmarks
-  - [ ] Add visual regression tests
+  - [x] Add visual regression tests
 
 ### Col Component
 - [ ] **Create Col component** (Priority: CRITICAL)
@@ -333,7 +333,7 @@
   - [ ] Write collapse/expand behavior tests
   - [ ] Test state management
   - [ ] Create accessibility tests
-  - [ ] Add visual regression tests
+  - [x] Add visual regression tests
 
 ### Tabs Component
 - [ ] **Create Tabs component** (Priority: MEDIUM)
@@ -403,7 +403,7 @@
   - [ ] Write item rendering tests
   - [ ] Test status indicators
   - [ ] Create interaction tests
-  - [ ] Add visual regression tests
+  - [x] Add visual regression tests
 
 ---
 

@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt
 
-from src.polygon_ui.layout.core.base import (
+from polygon_ui.layout.core.base import (
     LayoutComponent,
     GridComponent,
     UtilityComponent,

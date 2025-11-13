@@ -1,4 +1,5 @@
 """Performance benchmarks for the Container component."""
+
 import pytest
 import time
 import pytest

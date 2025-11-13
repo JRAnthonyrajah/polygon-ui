@@ -32,7 +32,7 @@ class Col(LayoutComponent):
     def __init__(
         self,
         parent: Optional[QWidget] = None,
-        span: Union[int, Dict[str, int]] = 1,
+        span: Union[int, Dict[str, int]] = 12,
         offset: Union[int, Dict[str, int]] = 0,
         order: Union[int, Dict[str, int]] = 0,
         **kwargs: Any,
@@ -62,8 +62,17 @@ class Col(LayoutComponent):
 
     def _get_layout_props(self) -> Dict[str, Any]:
         """Get layout properties for Grid integration (colspan, offset, order, etc.)."""
+        current_span = self._responsive.get("span", {"base": 12})
+        if isinstance(current_span, dict):
+            # Resolve current breakpoint span
+            current_bp = BreakpointSystem.get_breakpoint_for_width(self.width())
+            resolved_span = self._responsive._resolve_value(
+                current_span
+            )  # Use internal resolve with inheritance
+        else:
+            resolved_span = current_span
         return {
-            "colspan": self._responsive.get("span", 1),
+            "colspan": resolved_span,
             "offset": self._responsive.get("offset", 0),
             "order": self._responsive.get("order", 0),
         }
@@ -96,15 +105,23 @@ class Col(LayoutComponent):
     def _update_responsive_props(self) -> None:
         """Update responsive properties and notify Grid parent if applicable."""
         super()._update_responsive_props()
+        # Invalidate cache to ensure fresh resolution
+        if hasattr(self._responsive, "_invalidate_all_cache"):
+            self._responsive._invalidate_all_cache()
         parent = self.parent()
         if parent and Grid and isinstance(parent, Grid):
             if hasattr(parent, "_child_layout_props"):
                 parent._child_layout_props[self] = self._get_layout_props()
             if hasattr(parent, "_update_grid_layout"):
                 parent._update_grid_layout()
+        # Smooth transition: slight delay for layout update if needed
+        QTimer.singleShot(
+            50,
+            lambda: self.updateGeometry() if hasattr(self, "updateGeometry") else None,
+        )
 
     def _set_span(self, value: Union[int, Dict[str, int]]) -> None:
-        """Private method to set span with validation against parent Grid columns."""
+        """Private method to set span with validation against parent Grid columns and inheritance."""
         parent = self.parent()
         if parent and Grid and isinstance(parent, Grid):
             max_cols = getattr(parent, "columns", 12)
@@ -116,14 +133,35 @@ class Col(LayoutComponent):
                 return 1
             return min(v, max_cols)
 
-        if isinstance(value, int):
-            validated_value = validate_span(value)
-        elif isinstance(value, dict):
-            validated_value = {k: validate_span(v) for k, v in value.items()}
-        else:
-            validated_value = 1
+        # Normalize to full breakpoint dict with inheritance (mobile-first)
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        full_span = {}
+        current_span = 12  # Default base span for full width on mobile
 
-        self._responsive.set("span", validated_value)
+        if isinstance(value, int):
+            current_span = validate_span(value)
+            full_span = {bp: current_span for bp in breakpoints_order}
+        elif isinstance(value, dict):
+            # Start with default base if not specified
+            if "base" not in value:
+                current_span = 12
+            else:
+                current_span = validate_span(value.get("base", 12))
+            full_span["base"] = current_span
+
+            # Propagate forward with inheritance for larger breakpoints
+            for bp in breakpoints_order[1:]:  # Skip base
+                if bp in value:
+                    current_span = validate_span(value[bp])
+                full_span[bp] = current_span
+        else:
+            full_span = {bp: 12 for bp in breakpoints_order}
+
+        # Ensure all values are validated
+        for bp in breakpoints_order:
+            full_span[bp] = validate_span(full_span[bp])
+
+        self._responsive.set("span", full_span)
 
     def _validate_offset_config(
         self, value: Union[int, Dict[str, int]]
@@ -157,7 +195,9 @@ class Col(LayoutComponent):
     def _set_offset(self, value: Union[int, Dict[str, int]]) -> None:
         """Private method to set offset with validation against parent Grid columns and current span."""
         validated = self._validate_offset_config(value)
+        # Normalize offset similar to span for consistency (future enhancement)
         self._responsive.set("offset", validated)
+        self._revalidate_offset()
 
     def _revalidate_offset(self) -> None:
         """Revalidate current offset config after span or parent changes."""
@@ -228,7 +268,7 @@ class Col(LayoutComponent):
         self._update_responsive_props()
 
     def resizeEvent(self, event) -> None:
-        """Handle resize events to update responsive props."""
+        """Handle resize events to update responsive props with smoothing."""
         super().resizeEvent(event)
         self._update_responsive_props()
 
@@ -238,3 +278,20 @@ class Col(LayoutComponent):
         # Since internal layout is QVBoxLayout, add to it
         if self._layout:
             self._layout.addWidget(child)
+
+    def half_width(self) -> None:
+        """Convenience method: Set span to 12 on base, 6 on md and larger."""
+        self.span = {"base": 12, "sm": 12, "md": 6, "lg": 6, "xl": 6}
+
+    def third_width(self) -> None:
+        """Convenience method: Set span to 12 on base, 4 on md and larger."""
+        self.span = {"base": 12, "sm": 12, "md": 4, "lg": 4, "xl": 4}
+
+    def quarter_width(self) -> None:
+        """Convenience method: Set span to 12 on base, 3 on md and larger."""
+        self.span = {"base": 12, "sm": 12, "md": 3, "lg": 3, "xl": 3}
+
+    def auto_width(self) -> None:
+        """Convenience method: Set dynamic span based on content (fallback to 12)."""
+        # For now, default to full width; advanced content-based calculation can be added later
+        self.span = 12

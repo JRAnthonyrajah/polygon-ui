@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt, Property
 
 from ...core.provider import PolygonProvider
 from ..core.base import LayoutComponent
+from ..core.responsive import ResponsiveProps
 
 
 class Container(LayoutComponent):
@@ -22,20 +23,24 @@ class Container(LayoutComponent):
     def __init__(
         self,
         parent: Optional[QWidget] = None,
-        size: str = "md",
-        fluid: bool = False,
-        px: Union[str, int] = "md",
-        py: Union[str, int] = "md",
+        size: Union[str, Dict[str, str]] = "md",
+        fluid: Union[bool, Dict[str, bool]] = False,
+        px: Union[str, int, Dict[str, Union[str, int]]] = "md",
+        py: Union[str, int, Dict[str, Union[str, int]]] = "md",
         center: bool = True,
         **kwargs: Any,
     ):
         super().__init__(parent=parent, **kwargs)
 
-        # Container-specific properties
-        self._size: str = size
-        self._fluid: bool = fluid
-        self._px: Union[str, int] = px
-        self._py: Union[str, int] = py
+        # Responsive props handler
+        self._responsive = ResponsiveProps(self)
+
+        # Set initial responsive properties
+        self._responsive.set("size", size)
+        self._responsive.set("fluid", fluid)
+        self._responsive.set("px", px)
+        self._responsive.set("py", py)
+
         self._center: bool = center
 
         # Size breakpoints (Mantine-inspired)
@@ -71,18 +76,24 @@ class Container(LayoutComponent):
 
     def _update_container_styling(self) -> None:
         """Update container styling based on current properties."""
+        # Get responsive values
+        size_val = self._responsive.get("size", "md")
+        fluid_val = self._responsive.get("fluid", False)
+        px_val = self._responsive.get("px", "md")
+        py_val = self._responsive.get("py", "md")
+
         # Update padding
-        px_pixels = self._get_spacing_pixels(self._px)
-        py_pixels = self._get_spacing_pixels(self._py)
+        px_pixels = self._get_spacing_pixels(px_val)
+        py_pixels = self._get_spacing_pixels(py_val)
         if self._layout:
             self._layout.setContentsMargins(px_pixels, py_pixels, px_pixels, py_pixels)
 
         # Update sizing
-        if self._fluid:
+        if fluid_val:
             self.setMaximumWidth(16777215)  # QWidget max size
             self.setMaximumHeight(16777215)
         else:
-            max_width = self._size_map.get(self._size, 960)
+            max_width = self._size_map.get(size_val, 960)
             self.setMaximumWidth(max_width)
             self.setMaximumHeight(16777215)  # No height limit
 
@@ -96,54 +107,49 @@ class Container(LayoutComponent):
     # Property: size
     @Property(str)
     def size(self) -> str:
-        """Get the container size (xs, sm, md, lg, xl)."""
-        return self._size
+        """Get the current resolved container size (xs, sm, md, lg, xl)."""
+        return self._responsive.get("size", "md")
 
     @size.setter
-    def size(self, value: str) -> None:
-        """Set the container size."""
-        if value in self._size_map:
-            self._size = value
-            self._update_container_styling()
-        else:
-            raise ValueError(
-                f"Invalid size: {value}. Must be one of {list(self._size_map.keys())}"
-            )
+    def size(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set the container size. Can be str or responsive dict."""
+        self._responsive.set("size", value)
+        self._update_container_styling()
 
     # Property: fluid
     @Property(bool)
     def fluid(self) -> bool:
-        """Get fluid behavior (no max-width limit)."""
-        return self._fluid
+        """Get the current resolved fluid behavior (no max-width limit)."""
+        return self._responsive.get("fluid", False)
 
     @fluid.setter
-    def fluid(self, value: bool) -> None:
-        """Set fluid behavior."""
-        self._fluid = value
+    def fluid(self, value: Union[bool, Dict[str, bool]]) -> None:
+        """Set fluid behavior. Can be bool or responsive dict."""
+        self._responsive.set("fluid", value)
         self._update_container_styling()
 
     # Property: px (horizontal padding)
     @Property(Union[str, int])
     def px(self) -> Union[str, int]:
-        """Get horizontal padding."""
-        return self._px
+        """Get the current resolved horizontal padding."""
+        return self._responsive.get("px", "md")
 
     @px.setter
-    def px(self, value: Union[str, int]) -> None:
-        """Set horizontal padding (theme spacing key or pixels)."""
-        self._px = value
+    def px(self, value: Union[str, int, Dict[str, Union[str, int]]]) -> None:
+        """Set horizontal padding. Can be str/int or responsive dict."""
+        self._responsive.set("px", value)
         self._update_container_styling()
 
     # Property: py (vertical padding)
     @Property(Union[str, int])
     def py(self) -> Union[str, int]:
-        """Get vertical padding."""
-        return self._py
+        """Get the current resolved vertical padding."""
+        return self._responsive.get("py", "md")
 
     @py.setter
-    def py(self, value: Union[str, int]) -> None:
-        """Set vertical padding (theme spacing key or pixels)."""
-        self._py = value
+    def py(self, value: Union[str, int, Dict[str, Union[str, int]]]) -> None:
+        """Set vertical padding. Can be str/int or responsive dict."""
+        self._responsive.set("py", value)
         self._update_container_styling()
 
     # Property: center
@@ -166,6 +172,8 @@ class Container(LayoutComponent):
         # For container, children are centered by default via layout alignment
 
     def resizeEvent(self, event) -> None:
-        """Handle resize events (basic support; responsive in Task #16)."""
+        """Handle resize events with responsive updates."""
         super().resizeEvent(event)
-        # For now, no responsive updates; defer to Task #16
+        # Invalidate responsive cache and update styling
+        self._responsive._invalidate_all_cache()
+        self._update_container_styling()

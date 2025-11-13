@@ -167,7 +167,13 @@ class Group(LayoutComponent):
 
     @gap.setter
     def gap(self, value: Union[str, int, Dict[str, Union[str, int]]]) -> None:
-        """Set the gap spacing. Can be str/int or responsive dict."""
+        """
+        Set the gap spacing. Can be str/int or responsive dict.
+
+        Examples:
+        - Simple: gap="md"
+        - Responsive: gap={"base": "sm", "md": "md", "lg": "lg"}
+        """
         self._responsive.set("gap", value)
         # Also update spacing if it hasn't been explicitly set
         if not self._responsive.is_set("spacing"):

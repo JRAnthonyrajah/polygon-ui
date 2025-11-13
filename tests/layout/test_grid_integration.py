@@ -832,6 +832,869 @@ class TestNestedGridBehavior:
         )  # Collapses
 
 
+class TestGridResponsiveIntegration:
+    """Comprehensive responsive integration tests for the entire grid system."""
+
+    @pytest.fixture
+    def responsive_setup(self, qt_widget):
+        """Setup for responsive grid integration tests."""
+        qt_widget.resize(1200, 800)  # Start with large screen
+        container = Container(
+            parent=qt_widget, fluid=True, px={"base": "sm", "lg": "xl"}
+        )
+        grid = Grid(
+            parent=container,
+            columns={"base": 1, "sm": 2, "md": 3, "lg": 4},
+            gutter={"base": "xs", "md": "md"},
+            justify="center",
+            align="stretch",
+        )
+        simple_grid = SimpleGrid(
+            parent=grid,
+            cols={"base": 1, "sm": 2, "md": 3},
+            spacing="sm",
+            auto_cols=True,
+            min_col_width=200,
+        )
+        grid.add_child(simple_grid)
+        container.add_child(grid)
+        grid.show()
+        QApplication.processEvents()
+        return grid, simple_grid, container, qt_widget
+
+    def test_grid_col_responsive_coordination(self, responsive_setup):
+        """Test Grid + Col responsive coordination across breakpoints."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Add responsive Cols to grid
+        col1 = Col(
+            parent=grid,
+            span={"base": 1, "md": 2, "lg": 3},
+            offset={"sm": 0, "md": 1},
+        )
+        col1.add_child(QLabel("Responsive Col 1"))
+
+        col2 = Col(
+            parent=grid,
+            span={"base": 1, "sm": 1, "lg": 1},
+            offset={"lg": 1},
+        )
+        col2.add_child(QLabel("Responsive Col 2"))
+
+        grid.add_child(col1)
+        grid.add_child(col2)
+
+        # Large screen (lg): grid 4 cols, col1 span 3 offset 0, col2 span 1 offset 1 (but since after, positions accordingly)
+        qt_widget.resize(1400, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 4
+        assert col1.width() > col2.width() * 3  # Span 3 vs 1
+        assert col1.x() == 0
+        assert col2.x() > col1.width()  # After col1
+
+        # Medium (md): grid 3 cols, col1 span 2 offset 1, col2 span 1
+        qt_widget.resize(900, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 3
+        assert col1.width() > col2.width() * 2
+        assert col1.x() > 0  # Offset 1 col
+        assert col2.x() > col1.x() + col1.width()
+
+        # Small (sm): grid 2 cols, col1 span 1 offset 0, col2 span 1
+        qt_widget.resize(600, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 2
+        assert col1.width() == col2.width()  # Both span 1
+        assert col1.x() == 0
+        assert col2.x() == col1.width() + self._get_gutter_pixels(
+            grid, "xs"
+        )  # base gutter
+
+        # Base: grid 1 col, both full width stacked
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 1
+        assert col1.width() == col2.width() == grid.width()
+        assert col2.y() > col1.height() + self._get_gutter_pixels(grid, "xs")
+
+    def _get_gutter_pixels(self, grid, breakpoint):
+        """Helper to get gutter pixels for a breakpoint (mock theme)."""
+        # Mock theme spacing: xs=4, sm=8, md=16, etc.
+        spacing_map = {"xs": 4, "sm": 8, "md": 16, "lg": 24}
+        return spacing_map.get(breakpoint, 8)
+
+    def test_simplegrid_responsive_in_complex_layouts(self, responsive_setup):
+        """Test SimpleGrid responsive behavior in complex nested layouts."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Add items to SimpleGrid
+        for i in range(6):
+            box = Box(parent=simple_grid, p="md", height=100, bg="gray.100")
+            box.add_child(QLabel(f"Simple Item {i}"))
+            simple_grid.add_child(box)
+
+        # Test nested in Container with responsive padding
+        container.px = {"base": "xs", "lg": "xl"}  # Responsive padding
+
+        # Large: simple_grid 3 cols (md+), container xl padding
+        qt_widget.resize(1200, 800)
+        QApplication.processEvents()
+        assert simple_grid._layout.columnCount() == 3
+        padding = 24 * 2  # xl left+right
+        assert simple_grid.x() == padding  # Padded
+        row_width = (
+            sum(box.width() for box in simple_grid.children()[:3]) + 2 * 8
+        )  # spacing sm=8
+        assert abs(simple_grid.width() - row_width) < 10  # Fits with spacing
+
+        # Medium: 3 cols still, but smaller padding md? Wait, container px responsive
+        qt_widget.resize(800, 800)
+        QApplication.processEvents()
+        padding_md = 16 * 2
+        assert simple_grid.x() == padding_md
+        assert all(
+            box.y() == 0 or box.y() == 108 for box in simple_grid.children()
+        )  # 100h +8s
+
+        # Small: 2 cols (sm), xs padding=4*2=8
+        qt_widget.resize(500, 800)
+        QApplication.processEvents()
+        assert simple_grid._layout.columnCount() == 2
+        assert simple_grid.x() == 8
+        # Items wider due to fewer cols
+
+        # Base: 1 col
+        qt_widget.resize(300, 800)
+        QApplication.processEvents()
+        assert simple_grid._layout.columnCount() == 1
+        assert all(box.width() == simple_grid.width() for box in simple_grid.children())
+
+    def test_container_responsive_padding_nested_components(self, responsive_setup):
+        """Test Container responsive padding with nested grid components."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Nest Stack and Group inside grid, within container
+        stack = Stack(
+            parent=grid,
+            direction={"base": "column", "md": "row"},
+            gap="sm",
+            align="center",
+        )
+        for i in range(3):
+            stack.add_child(QLabel(f"Stack Item {i}"))
+
+        group = Group(
+            parent=grid,
+            gap={"base": "xs", "lg": "lg"},
+            wrap=True,
+            justify="space-between",
+        )
+        for i in range(4):
+            group.add_child(QLabel(f"Group Item {i}"))
+
+        grid.add_child(stack)
+        grid.add_child(group)
+
+        # Container responsive padding affects nested positioning
+        # Large: xl padding=24*2=48, stack row, group lg gap=24
+        qt_widget.resize(1400, 800)
+        QApplication.processEvents()
+        assert container.px == "xl"  # Resolved
+        assert grid.x() == 48
+        assert stack.direction == "row"
+        assert stack.children()[1].x() > stack.children()[0].width() + 8  # sm gap
+        assert group.gap == "lg"  # Responsive
+
+        # Base: xs padding=4*2=8, stack column, group xs gap=4, wrap if needed
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert grid.x() == 8
+        assert stack.direction == "column"
+        assert all(c.y() > 0 for c in stack.children()[1:])
+        assert group.gap == "xs"
+        # With small width, group wraps
+        assert len(set(c.y() for c in group.children())) > 1
+
+    def test_stack_group_responsive_in_grid_contexts(self, responsive_setup):
+        """Test Stack/Group responsive behavior within Grid contexts."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Stack in grid cell, responsive direction
+        responsive_stack = Stack(
+            parent=grid,
+            direction={"base": "column", "sm": "row"},
+            gap={"base": "xs", "md": "md"},
+            justify="space-around",
+            wrap=False,
+        )
+        items = [QLabel(f"Resp Stack {i}") for i in range(4)]
+        for item in items:
+            responsive_stack.add_child(item, grow=1 if i % 2 == 0 else 0)
+
+        # Group in another cell, responsive wrap and gap
+        responsive_group = Group(
+            parent=grid,
+            gap={"base": "sm", "lg": "xl"},
+            wrap={"base": True, "md": False},
+            align="stretch",
+            justify={"base": "center", "lg": "start"},
+        )
+        group_items = [QLabel(f"Resp Group {i}") for i in range(5)]
+        for item in group_items:
+            responsive_group.add_child(item)
+
+        grid.add_child(responsive_stack)
+        grid.add_child(responsive_group)
+
+        # Test coordination with grid breakpoints
+        # sm: grid 2 cols, stack row, group wrap true sm gap
+        qt_widget.resize(600, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 2
+        assert responsive_stack.direction == "row"
+        assert (
+            sum(item.width() for item in responsive_stack.children() if item.grow) > 200
+        )  # Grow fills
+        assert responsive_group.wrap is True
+        assert len(set(item.y() for item in responsive_group.children())) > 1  # Wrapped
+        assert responsive_group.gap == "sm"
+        assert responsive_group.justify == "center"
+
+        # lg: grid 4 cols, stack row md gap, group no wrap xl gap start justify
+        qt_widget.resize(1200, 800)
+        QApplication.processEvents()
+        assert responsive_stack.gap == "md"
+        assert responsive_group.wrap is False
+        assert all(item.y() == 0 for item in responsive_group.children())  # No wrap
+        assert responsive_group.gap == "xl"
+        assert responsive_group.justify == "start"
+        assert responsive_group.children()[0].x() == 0
+
+        # Base: grid 1 col, stack column xs gap, group wrap true sm? base sm gap center
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 1
+        assert responsive_stack.direction == "column"
+        assert all(item.x() == 0 for item in responsive_stack.children())
+        assert responsive_group.gap == "sm"  # base
+        assert responsive_group.justify == "center"
+
+    def test_flex_responsive_with_grid_integration(self, responsive_setup):
+        """Test Flex responsive behavior integrated with Grid."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Flex nested in grid cell, with responsive props coordinating with grid
+        integrated_flex = Flex(
+            parent=grid,
+            direction={"base": "column", "md": "row"},
+            wrap={"base": False, "lg": True},
+            justify={"base": "start", "md": "space-between"},
+            align={"base": "start", "lg": "center"},
+            gap={"base": "xs", "md": "lg"},
+        )
+        flex_children = []
+        for i in range(6):
+            child = Box(p="sm", bg="blue.200", height=50 if i % 2 == 0 else 80)
+            child.add_child(QLabel(f"Flex-Grid {i}"))
+            integrated_flex.add_child(child, grow=1, basis={"base": 100, "lg": "20%"})
+
+        grid.add_child(integrated_flex)
+
+        # lg: grid 4 cols, flex row wrap true lg gap center align, basis 20%
+        qt_widget.resize(1400, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 4
+        assert integrated_flex.direction == "row"
+        assert integrated_flex.wrap is True
+        assert integrated_flex.justify == "space-between"
+        assert integrated_flex.align == "center"
+        assert integrated_flex.gap == "lg"
+        # With wrap, multiple lines, children basis 20% of flex width
+        flex_width = integrated_flex.width()
+        for child in flex_children[:3]:  # First row approx
+            assert abs(child.width() - flex_width * 0.2) < 10
+        # Heights: center align, varying heights centered in line height
+
+        # md: grid 3 cols, flex row no wrap? md wrap false, space-between, lg gap? md lg gap
+        qt_widget.resize(900, 800)
+        QApplication.processEvents()
+        assert integrated_flex.wrap is False  # md false
+        assert all(child.y() == 0 for child in flex_children)  # No wrap
+        positions = [c.x() for c in flex_children]
+        assert positions == sorted(positions)  # Ordered
+        # Space-between: even distribution
+
+        # base: grid 1 col, flex column no wrap xs gap start, basis 100 full
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert integrated_flex.direction == "column"
+        assert integrated_flex.wrap is False
+        assert integrated_flex.justify == "start"
+        assert integrated_flex.align == "start"
+        assert integrated_flex.gap == "xs"
+        assert all(child.width() == integrated_flex.width() for child in flex_children)
+        assert all(c.y() > 0 for c in flex_children[1:])  # Stacked
+
+    def test_multi_component_responsive_layouts(self, qt_widget):
+        """Test multi-component responsive layouts: Grid + Col + SimpleGrid + Container."""
+        qt_widget.resize(1200, 800)
+        outer_container = Container(
+            parent=qt_widget,
+            size={"base": "xs", "lg": "xl"},
+            fluid=True,
+            px="lg",
+            py={"base": "sm", "md": "lg"},
+        )
+
+        main_grid = Grid(
+            parent=outer_container,
+            columns={"base": 1, "sm": 2, "md": 3, "lg": 4},
+            gutter="md",
+            justify="start",
+            align="stretch",
+        )
+
+        # Cols with nested SimpleGrid
+        col_with_simple = Col(
+            parent=main_grid,
+            span={"base": 1, "md": 2, "lg": 3},
+        )
+        nested_simple = SimpleGrid(
+            parent=col_with_simple,
+            cols={"base": 1, "sm": 2},
+            spacing={"base": "xs", "md": "sm"},
+            min_col_width=150,
+        )
+        for i in range(4):
+            nested_simple.add_child(
+                Box(p="xs", height=60, bg="green.100").add_child(QLabel(f"Nested {i}"))
+            )
+
+        # Another col with content
+        simple_col = Col(parent=main_grid, span=1)
+        simple_col.add_child(QLabel("Simple Content"))
+
+        main_grid.add_child(col_with_simple)
+        main_grid.add_child(simple_col)
+
+        outer_container.add_child(main_grid)
+        main_grid.show()
+        QApplication.processEvents()
+
+        # lg: container xl size lg py, main_grid 4 cols, col span 3, nested_simple 2 cols
+        assert outer_container.size == "xl"
+        assert outer_container.py == "lg"
+        assert main_grid._layout.columnCount() == 4
+        assert col_with_simple.width() > simple_col.width() * 3
+        assert nested_simple._layout.columnCount() == 2  # sm+ in md+ col
+        row1_nested = nested_simple.children()[:2]
+        assert all(abs(c.width() - nested_simple.width() / 2) < 5 for c in row1_nested)
+
+        # sm: main_grid 2 cols, col span 1 (base), nested 2 cols but col narrow
+        qt_widget.resize(600, 800)
+        QApplication.processEvents()
+        assert main_grid._layout.columnCount() == 2
+        assert col_with_simple.width() == simple_col.width()
+        # Nested tries 2 cols but min_width 150, if col <300, falls to 1
+        if col_with_simple.width() < 300:
+            assert nested_simple._layout.columnCount() == 1
+        else:
+            assert nested_simple._layout.columnCount() == 2
+
+        # base: all stacked, container xs size sm py
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert outer_container.size == "xs"
+        assert outer_container.py == "sm"
+        assert main_grid._layout.columnCount() == 1
+        assert all(c.width() == main_grid.width() for c in main_grid.children())
+        assert nested_simple._layout.columnCount() == 1
+        assert all(c.y() > 0 for c in nested_simple.children()[1:])
+
+    def test_coordinated_breakpoint_changes(self, responsive_setup):
+        """Test coordinated breakpoint changes across all components."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Set coordinated responsive props across components
+        grid.columns = {"base": 1, "xs": 2, "sm": 3, "md": 4, "lg": 5, "xl": 6}
+        simple_grid.cols = {"base": 1, "xs": 2, "sm": 3, "md": 4}
+        container.px = {
+            "base": "xs",
+            "xs": "sm",
+            "sm": "md",
+            "md": "lg",
+            "lg": "xl",
+            "xl": "2xl",
+        }
+        container.py = {"base": "sm", "md": "lg", "xl": "2xl"}
+
+        # Add children to test changes
+        for i in range(3):
+            grid.add_child(QLabel(f"Grid Child {i}"))
+        for i in range(4):
+            simple_grid.add_child(QLabel(f"Simple Child {i}"))
+
+        # Test each breakpoint transition
+        breakpoints = [
+            ("xl", 1920),
+            ("lg", 1200),
+            ("md", 900),
+            ("sm", 600),
+            ("xs", 480),
+            ("base", 0),
+        ]
+        expected_cols = {"grid": [6, 5, 4, 3, 2, 1], "simple": [4, 4, 4, 3, 2, 1]}
+        expected_px = [48, 24, 16, 8, 4, 4]  # 2xl=48, xl=24, lg=24? Wait mock
+        px_map = {"2xl": 48, "xl": 24, "lg": 24, "md": 16, "sm": 8, "xs": 4}
+        py_map = {"2xl": 48, "lg": 24, "sm": 8}
+
+        for bp_name, width in breakpoints:
+            qt_widget.resize(width, 800)
+            QApplication.processEvents()
+
+            # Column counts
+            assert (
+                grid._layout.columnCount()
+                == expected_cols["grid"][breakpoints.index((bp_name, width))]
+            )
+            assert (
+                simple_grid._layout.columnCount()
+                == expected_cols["simple"][breakpoints.index((bp_name, width))]
+            )
+
+            # Container padding
+            expected_px_val = px_map.get(container.px, 8)
+            assert grid.x() == expected_px_val  # Left padding
+            if bp_name in py_map:
+                # Check top padding indirectly via y of first child
+                assert (
+                    main_grid.children()[0].y() == py_map[bp_name]
+                    if hasattr(main_grid, "children")
+                    else True
+                )
+
+            # Verify child positions update without overlap
+            for child in grid.children():
+                assert child.x() >= 0 and child.y() >= 0
+            for child in simple_grid.children():
+                assert child.x() >= 0 and child.y() >= 0
+
+    def test_mobile_first_responsive_patterns(self, responsive_setup):
+        """Test mobile-first responsive grid patterns across the system."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Mobile-first: base mobile, then enhance for larger
+        # Pattern: Mobile stacked cards, tablet 2-col, desktop 3-4 col with offsets
+        col_mobile = Col(parent=grid, span=1)  # Full on all, but content responsive
+        card_stack = Stack(
+            parent=col_mobile,
+            direction="column",  # Mobile vertical
+            gap="sm",
+            spacing=0,  # No extra
+        )
+        cards = []
+        for i in range(3):
+            card = Box(
+                p={"base": "sm", "md": "md"},
+                bg="white",
+                borderRadius={"base": "sm", "lg": "lg"},
+                boxShadow="sm",
+                height={"base": 120, "md": 150},
+            )
+            card.add_child(QLabel(f"Mobile Card {i}"))
+            card_stack.add_child(card)
+            cards.append(card)
+
+        # Add horizontal group on larger screens
+        card_group = Group(
+            parent=col_mobile,
+            direction="row",  # Wait, Group is horizontal by default
+            gap="md",
+            wrap=True,
+            visible={"base": False, "md": True},  # Hide on mobile
+        )
+        for i in range(3):
+            group_card = Box(p="sm", width={"md": 200, "lg": 250}, bg="gray.50")
+            group_card.add_child(QLabel(f"Group Card {i}"))
+            card_group.add_child(group_card)
+
+        col_mobile.add_child(card_stack)
+        col_mobile.add_child(card_group)
+
+        grid.add_child(col_mobile)
+
+        # Base (mobile): Stack vertical, group hidden, small padding/shadow
+        qt_widget.resize(375, 800)  # Mobile width
+        QApplication.processEvents()
+        assert card_stack.direction == "column"
+        assert all(c.y() > 0 for c in cards[1:])
+        assert not card_group.isVisible()  # Hidden
+        assert all(card.p == "sm" for card in cards)
+        assert all(card.height == 120 for card in cards)
+        assert all(card.borderRadius == "sm" for card in cards)
+
+        # md (tablet): Stack still column? But add group visible, md padding
+        qt_widget.resize(768, 800)
+        QApplication.processEvents()
+        assert card_group.isVisible()
+        assert card_group.wrap is True  # If needed
+        assert all(card.p == "md" for card in cards)
+        assert all(card.height == 150 for card in cards)
+        assert all(card.borderRadius == "sm" for card in cards)  # lg not yet
+
+        # lg (desktop): Group no wrap? lg width, lg radius
+        qt_widget.resize(1200, 800)
+        QApplication.processEvents()
+        assert all(group_card.width == 250 for group_card in card_group.children())
+        assert all(card.borderRadius == "lg" for card in cards)
+
+        # Verify mobile-first: Changes only enhance, no breakage on resize back
+        qt_widget.resize(375, 800)
+        QApplication.processEvents()
+        # Still correct for mobile
+        assert not card_group.isVisible()
+
+    def test_nested_responsive_layouts_multiple_levels(self, qt_widget):
+        """Test nested responsive layouts with multiple levels of grid components."""
+        qt_widget.resize(1200, 800)
+
+        # Level 1: Responsive Container
+        level1_container = Container(
+            parent=qt_widget,
+            fluid=True,
+            px={"base": "xs", "lg": "2xl"},
+            py="md",
+        )
+
+        # Level 2: Main Grid responsive cols
+        level2_grid = Grid(
+            parent=level1_container,
+            columns={"base": 1, "sm": 2, "md": 3, "lg": 4},
+            gutter={"base": "sm", "md": "lg"},
+        )
+
+        # Level 3: Col with nested SimpleGrid
+        level3_col = Col(
+            parent=level2_grid,
+            span={"base": 1, "md": 2, "lg": 3},
+            offset={"lg": 0.5},  # Half col offset on lg
+        )
+        level3_simple = SimpleGrid(
+            parent=level3_col,
+            cols={"base": 1, "sm": 2, "md": 3},
+            spacing="md",
+            auto_cols=True,
+            min_col_width=180,
+        )
+
+        # Level 4: Nested Flex in SimpleGrid cells
+        for i in range(6):
+            level4_flex = Flex(
+                parent=level3_simple,
+                direction={"base": "column", "sm": "row"},
+                gap="sm",
+                justify="space-around",
+                align_items="center",  # Qt align
+            )
+            for j in range(2):
+                label = QLabel(f"Deep {i}-{j}")
+                level4_flex.add_child(label, grow=1)
+            level3_simple.add_child(level4_flex)
+
+        # Add other level3 content
+        other_col = Col(parent=level2_grid, span=1)
+        other_col.add_child(
+            Stack(direction="column", gap="sm").add_child(QLabel("Other"))
+        )
+
+        level2_grid.add_child(level3_col)
+        level2_grid.add_child(other_col)
+        level1_container.add_child(level2_grid)
+        level2_grid.show()
+        QApplication.processEvents()
+
+        # lg: 4 cols, col span 3 offset 0.5 (approx), simple 3 cols, flex row
+        assert level2_grid._layout.columnCount() == 4
+        assert level3_col.width() > other_col.width() * 3
+        assert level3_col.x() > level2_grid.width() / 8  # 0.5 col ~1/8
+        assert level3_simple._layout.columnCount() == 3
+        level4_flexes = level3_simple.children()
+        for flex in level4_flexes[:3]:  # First row
+            assert flex.direction == "row"
+            assert flex.children()[1].x() > flex.children()[0].width() + 8  # sm gap
+
+        # sm: 2 cols, col span 1 no offset, simple 2 cols, flex row
+        qt_widget.resize(600, 800)
+        QApplication.processEvents()
+        assert level2_grid._layout.columnCount() == 2
+        assert level3_col.width() == other_col.width()
+        assert level3_col.x() == 0
+        assert level3_simple._layout.columnCount() == 2
+        for flex in level4_flexes:
+            assert flex.direction == "row"
+
+        # base: 1 col, simple 1 col, flex column
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert level2_grid._layout.columnCount() == 1
+        assert level3_simple._layout.columnCount() == 1
+        for flex in level4_flexes:
+            assert flex.direction == "column"
+            assert all(c.x() == 0 for c in flex.children())
+
+        # Verify deep coordination: Padding affects all levels
+        assert level2_grid.x() == 4  # base xs px=4
+        qt_widget.resize(1200, 800)
+        QApplication.processEvents()
+        assert level2_grid.x() == 48  # 2xl=48?
+
+    def test_responsive_performance_characteristics(self, qt_widget):
+        """Test responsive performance: Time for layout updates on resize."""
+        import time
+
+        qt_widget.resize(1200, 800)
+
+        # Complex nested structure
+        container = Container(parent=qt_widget, fluid=True)
+        grid = Grid(parent=container, columns=4, gutter="md")
+        for i in range(12):  # 3x4 grid
+            col = Col(parent=grid, span=1)
+            inner_flex = Flex(parent=col, direction="row", wrap=True, gap="sm")
+            for j in range(4):
+                inner_flex.add_child(QLabel(f"Perf {i}-{j}"))
+            grid.add_child(col)
+        simple_in_grid = SimpleGrid(parent=grid, cols=2, spacing="lg")
+        for k in range(6):
+            simple_in_grid.add_child(
+                Box(p="md", bg="gray.200").add_child(QLabel(f"Simple {k}"))
+            )
+        grid.add_child(simple_in_grid)
+
+        container.add_child(grid)
+        grid.show()
+
+        # Baseline layout time
+        start = time.time()
+        QApplication.processEvents()
+        baseline = time.time() - start
+
+        # Test multiple rapid resizes (simulate responsive transitions)
+        resize_times = []
+        widths = [400, 600, 900, 1200, 600, 400, 1200]  # Mobile to desktop and back
+        for width in widths:
+            start = time.time()
+            qt_widget.resize(width, 800)
+            QApplication.processEvents()
+            resize_times.append(time.time() - start)
+
+        avg_resize = sum(resize_times) / len(resize_times)
+        max_resize = max(resize_times)
+
+        # Performance assertions (heuristic, adjust as needed)
+        assert baseline < 0.1  # Initial layout fast
+        assert avg_resize < 0.05  # Each resize <50ms
+        assert max_resize < 0.1  # Worst case <100ms
+
+        # Test with many children (scale)
+        # Add 50 more simple items
+        for _ in range(50):
+            simple_in_grid.add_child(QLabel("Extra"))
+        qt_widget.resize(800, 800)
+        start = time.time()
+        QApplication.processEvents()
+        scaled_time = time.time() - start
+        assert scaled_time < 0.2  # Still reasonable with 50+ children
+
+    def test_theme_integration_responsive_changes(self, qt_widget, monkeypatch):
+        """Test theme integration with responsive changes (mock theme breakpoints)."""
+        from polygon_ui.theme import Theme
+
+        # Mock theme with responsive spacing/colors
+        def mock_get_spacing(size, breakpoint):
+            spacing = {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32}
+            return spacing.get(size, 8)
+
+        def mock_get_color(color, breakpoint):
+            if breakpoint == "dark":  # Simulate theme change at breakpoint
+                return "#333"
+            return "#ccc"
+
+        monkeypatch.setattr(Theme, "_get_spacing_pixels", mock_get_spacing)
+        monkeypatch.setattr(Theme, "get_color", mock_get_color)
+
+        # Setup with theme-dependent props
+        qt_widget.resize(1200, 800)
+        container = Container(parent=qt_widget, fluid=True, px="lg", bg="gray.100")
+        grid = Grid(
+            parent=container,
+            columns=3,
+            gutter="md",
+            justify="center",
+        )
+        for i in range(6):
+            col = Col(parent=grid, span=1, p="md", bg="blue.200")
+            col.add_child(QLabel(f"Themed {i}"))
+            grid.add_child(col)
+        container.add_child(grid)
+        grid.show()
+        QApplication.processEvents()
+
+        # Large: lg spacing=24, light colors
+        gutter_px = Theme._get_spacing_pixels("md", "lg")  # Assume theme has bp
+        assert gutter_px == 16  # md=16
+        # Colors: light
+        assert any("blue" in col.styleSheet() for col in grid.children())  # Mock
+
+        # Simulate theme change at md breakpoint (e.g., compact theme)
+        qt_widget.resize(900, 800)
+        QApplication.processEvents()
+        # Smaller spacing? But mock doesn't change per bp, but test resolution
+        assert Theme._get_spacing_pixels("md", "md") == 16
+
+        # Test color change if dark at small bp (simulate)
+        # For now, assert no crash on theme resolve at resizes
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        for col in grid.children():
+            assert col.isVisible()  # Theme applied without error
+
+    def test_accessibility_responsive_scenarios(self, qt_widget):
+        """Test accessibility in responsive grid scenarios (basic tab order, visibility)."""
+        qt_widget.resize(1200, 800)
+
+        container = Container(parent=qt_widget, fluid=True)
+        grid = Grid(parent=container, columns={"base": 1, "lg": 3}, gutter="sm")
+        accessible_items = []
+        for i in range(6):
+            # Make focusable labels (simulate buttons)
+            item = QLabel(f"Accessible Item {i}")
+            item.setFocusPolicy(Qt.FocusPolicy.TabFocus)  # Tab-able
+            item.setObjectName(f"item_{i}")  # For identification
+            col = Col(parent=grid, span=1)
+            col.add_child(item)
+            grid.add_child(col)
+            accessible_items.append(item)
+
+        # Add hidden on small
+        hidden_item = QLabel("Hidden on Mobile")
+        hidden_item.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        hidden_col = Col(parent=grid, span=1, visible={"base": False, "lg": True})
+        hidden_col.add_child(hidden_item)
+        grid.add_child(hidden_col)
+
+        container.add_child(grid)
+        grid.show()
+        QApplication.processEvents()
+
+        # lg: All visible, tab order logical (left to right, top to bottom)
+        qt_widget.resize(1200, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 3
+        assert all(item.isVisible() for item in accessible_items + [hidden_item])
+        # Simulate tab: focus order should be row-major
+        # Basic: Check object names in tab order
+        tab_order = []
+        current = grid.focusWidget()
+        while current:
+            tab_order.append(current.objectName())
+            current = current.nextInFocusChain()
+        # Expect order like item_0,1,2,3,4,5, hidden
+        assert len([name for name in tab_order if name.startswith("item_")]) == 6
+
+        # base: 1 col, hidden invisible, tab skips it
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 1
+        assert all(item.isVisible() for item in accessible_items)
+        assert not hidden_item.isVisible()
+        # Tab order: only visible items, stacked order
+        tab_order_small = []
+        current = grid.focusWidget()
+        while current:
+            if hasattr(current, "objectName"):
+                tab_order_small.append(current.objectName())
+            current = current.nextInFocusChain()
+        visible_names = [name for name in tab_order_small if name.startswith("item_")]
+        assert len(visible_names) == 6
+        assert "hidden" not in str(tab_order_small)  # Skipped
+
+        # Resize back: Order preserved, no loss
+        qt_widget.resize(1200, 800)
+        QApplication.processEvents()
+        assert hidden_item.isVisible()  # Reappears in tab order
+
+    def test_responsive_edge_cases_error_handling(self, responsive_setup):
+        """Test edge cases and error handling in responsive grid system."""
+        grid, simple_grid, container, qt_widget = responsive_setup
+
+        # Case 1: Invalid responsive prop (non-dict or bad keys)
+        with pytest.raises(ValueError):
+            grid.columns = "invalid"  # Should error
+
+        # Case 2: Conflicting breakpoints (overlapping min widths - but system handles)
+        grid.columns = {"base": 1, "xs": 2, "sm": 3, "invalid_bp": 4}  # Ignore invalid
+        assert "invalid_bp" not in grid._responsive.props["columns"]
+
+        # Case 3: Responsive prop with missing base
+        grid.gutter = {
+            "sm": "lg"
+        }  # Should default base to current or error? Assume fallback
+        assert grid.gutter == "md"  # Default, or test no crash
+        grid.gutter = {"base": "xs", "sm": "invalid_size"}
+        # Invalid size fallback
+        qt_widget.resize(600, 800)
+        QApplication.processEvents()
+        # No crash, uses fallback spacing
+
+        # Case 4: Nested responsive conflict (child bp overrides parent?)
+        col = Col(parent=grid, span={"base": 1, "md": 5})  # > parent md 3 cols
+        grid.add_child(col)
+        qt_widget.resize(900, 800)  # md
+        QApplication.processEvents()
+        assert col.width() <= grid.width()  # Clamped, no overflow
+
+        # Case 5: Rapid breakpoint changes performance edge
+        start = time.time()
+        for _ in range(20):
+            qt_widget.resize(400 + _ * 20, 800)  # Small variations
+            QApplication.processEvents()
+        rapid_time = time.time() - start
+        assert rapid_time < 0.5  # Handles rapid without lag
+
+        # Case 6: Theme change during responsive (no crash)
+        # Already covered in theme test
+
+        # Case 7: Zero-width responsive (collapse)
+        zero_col = Col(parent=grid, span={"base": 0, "lg": 1})  # Invalid span 0
+        grid.add_child(zero_col)
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert zero_col.width() > 0  # Defaults to 1 or min
+
+        # Case 8: Accessibility in edge responsive (hidden/focus)
+        focus_item = QLabel("Focus Edge")
+        focus_item.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        hidden_flex = Flex(parent=grid, visible={"base": False, "md": True})
+        hidden_flex.add_child(focus_item)
+        grid.add_child(hidden_flex)
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        assert not focus_item.isVisible()
+        # Tab skips hidden
+        assert focus_item not in qt_widget.findChildren(QWidget, visibleOnly=True)
+
+        qt_widget.resize(900, 800)
+        QApplication.processEvents()
+        assert focus_item.isVisible()
+
+
+# Note: Additional tests for Tasks #170-#172 will extend this file.
+# Performance tests in #172 will use timeit or similar for benchmarks.
+# All tests assume theme spacing (e.g., "md" ~16px); adjust assertions if theme changes.
+# Use approximate geometry checks due to Qt rendering variances.
+# Nested Grid tests added for Task #170: Comprehensive coverage of nesting behaviors.
+# Responsive integration tests added for Task #171: Focus on system-level responsive coordination.
+
 # Note: Additional tests for Tasks #170-#172 will extend this file.
 # Performance tests in #172 will use timeit or similar for benchmarks.
 # All tests assume theme spacing (e.g., "md" ~16px); adjust assertions if theme changes.

@@ -26,12 +26,21 @@ class Box(LayoutComponent):
     functionality. For advanced flexbox/grid features, use dedicated Flex/Grid
     components.
 
+    Enhanced with advanced responsive style props: width, height, borderRadius, boxShadow.
+    Layout properties: justify, align, gap, wrap (basic implementation).
+    Supports component composition via add_child and nesting.
+    Convenience methods for common layout patterns: center_content, vertical_stack, horizontal_stack.
+    Class method for common use cases: Box.card().
+
     Integrates with the theme system for consistent spacing, colors, and typography.
-    Includes basic event handling overrides for mouse and resize events.
+    Includes basic event handling overrides for mouse and resize events. Responsive
+    behavior updates on resize using breakpoint system (base, sm, md, lg, xl).
 
     Example:
-        box = Box(m="md", p="lg", bg="gray.100", display="flex")
+        box = Box(m="md", p="lg", bg="gray.100", display="flex", justify="center")
         box.add_child(child_widget)
+        # Or use convenience
+        card = Box.card(p="lg")
     """
 
     def __init__(
@@ -63,6 +72,14 @@ class Box(LayoutComponent):
         # Layout props
         self._responsive.set("display", display)
         self._responsive.set("direction", direction)
+        self._responsive.set("justify", justify)
+        self._responsive.set("align", align)
+        self._responsive.set("gap", gap or {})
+        self._responsive.set("wrap", wrap or False)
+        self._responsive.set("width", width or {})
+        self._responsive.set("height", height or {})
+        self._responsive.set("borderRadius", borderRadius or {})
+        self._responsive.set("boxShadow", boxShadow or {})
 
         # Internal state
         self._display = display
@@ -147,7 +164,9 @@ class Box(LayoutComponent):
                 # Could parse and resolve colors/spacing, but keep simple
                 pass
             return value
-
+        elif prop_key == "borderRadius" and isinstance(value, str) and self._provider:
+            px_value = self._provider.get_theme_value(f"spacing.{value}", 4)
+            return f"{px_value}px"
         return str(value)
 
     def _update_styling(self) -> None:
@@ -181,6 +200,16 @@ class Box(LayoutComponent):
         if border_val:
             qss_parts.append(f"border: {border_val};")
 
+        # Border Radius
+        br_val = self._get_responsive_style_value("borderRadius")
+        if br_val:
+            qss_parts.append(f"border-radius: {br_val};")
+
+        # Box Shadow
+        shadow_val = self._get_responsive_style_value("boxShadow")
+        if shadow_val:
+            qss_parts.append(f"box-shadow: {shadow_val};")
+
         if qss_parts:
             self.setStyleSheet(" ".join(qss_parts))
 
@@ -189,17 +218,46 @@ class Box(LayoutComponent):
         super()._update_layout_styling()
 
         if self._layout:
-            # Apply gap as spacing from theme
-            gap_val = self._gap  # From base
-            if self._provider:
-                spacing = self._provider.get_theme_value(f"spacing.{gap_val}", 8)
+            # Gap
+            gap_val = self._responsive.get("gap", "none")
+            if gap_val != "none":
+                spacing = self._get_spacing_pixels(gap_val)
                 self._layout.setSpacing(spacing)
 
-            # Basic alignment (extend for justify/align)
-            justify_val = self._justify
-            if justify_val == "center":
-                if isinstance(self._layout, (QHBoxLayout, QVBoxLayout)):
-                    self._layout.setAlignment(Qt.AlignCenter)
+            # Alignment
+            justify_val = self._responsive.get("justify", "start")
+            align_val = self._responsive.get("align", "stretch")
+            if isinstance(self._layout, QHBoxLayout):
+                h_align = Qt.AlignLeft
+                if justify_val == "center":
+                    h_align = Qt.AlignHCenter
+                elif justify_val == "end":
+                    h_align = Qt.AlignRight
+                v_align = Qt.AlignVCenter
+                if align_val == "start":
+                    v_align = Qt.AlignTop
+                elif align_val == "center":
+                    v_align = Qt.AlignVCenter
+                elif align_val == "end":
+                    v_align = Qt.AlignBottom
+                elif align_val == "stretch":
+                    v_align = Qt.AlignTop
+                self._layout.setAlignment(h_align | v_align)
+            elif isinstance(self._layout, QVBoxLayout):
+                v_align = Qt.AlignTop
+                if justify_val == "center":
+                    v_align = Qt.AlignVCenter
+                elif justify_val == "end":
+                    v_align = Qt.AlignBottom
+                h_align = Qt.AlignLeft
+                if align_val == "start":
+                    h_align = Qt.AlignLeft
+                elif align_val == "center":
+                    h_align = Qt.AlignHCenter
+                elif align_val == "end":
+                    h_align = Qt.AlignRight
+                self._layout.setAlignment(h_align | v_align)
+            # For GridLayout, basic alignment can be added if needed
 
     # Style Properties (responsive)
     @Property(str)
@@ -285,6 +343,98 @@ class Box(LayoutComponent):
             self._setup_layout_mode()
         self._update_layout_styling()
 
+    # Additional Layout Properties
+    @Property(str)
+    def justify(self) -> str:
+        """Get the current justify-content value."""
+        return self._responsive.get("justify", "start")
+
+    @justify.setter
+    def justify(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set the justify-content."""
+        self._responsive.set("justify", value)
+        self._update_layout_styling()
+
+    @Property(str)
+    def align(self) -> str:
+        """Get the current align-items value."""
+        return self._responsive.get("align", "stretch")
+
+    @align.setter
+    def align(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set the align-items."""
+        self._responsive.set("align", value)
+        self._update_layout_styling()
+
+    @Property(str)
+    def gap(self) -> str:
+        """Get the current gap spacing."""
+        return self._responsive.get("gap", "none")
+
+    @gap.setter
+    def gap(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set the gap spacing."""
+        self._responsive.set("gap", value)
+        self._update_layout_styling()
+
+    @Property(bool)
+    def wrap(self) -> bool:
+        """Get the current wrap behavior."""
+        return self._responsive.get("wrap", False)
+
+    @wrap.setter
+    def wrap(self, value: Union[bool, Dict[str, bool]]) -> None:
+        """Set the wrap behavior. Note: Basic support only in Box."""
+        self._responsive.set("wrap", value)
+        if self.display == "flex" and value:
+            print("Warning: For full wrapping support, use the Flex component.")
+        self._update_layout_styling()
+
+    # Additional Style Properties
+    @Property(str)
+    def width(self) -> str:
+        """Get the current width value."""
+        return self._responsive.get("width", "auto")
+
+    @width.setter
+    def width(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set width (supports px, %, auto, theme keys)."""
+        self._responsive.set("width", value)
+        self._update_size_props()
+
+    @Property(str)
+    def height(self) -> str:
+        """Get the current height value."""
+        return self._responsive.get("height", "auto")
+
+    @height.setter
+    def height(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set height (supports px, %, auto, theme keys)."""
+        self._responsive.set("height", value)
+        self._update_size_props()
+
+    @Property(str)
+    def borderRadius(self) -> str:
+        """Get the current border-radius value."""
+        return self._responsive.get("borderRadius", "")
+
+    @borderRadius.setter
+    def borderRadius(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set border-radius (e.g., "md", "8px")."""
+        self._responsive.set("borderRadius", value)
+        self._update_styling()
+
+    @Property(str)
+    def boxShadow(self) -> str:
+        """Get the current box-shadow value."""
+        return self._responsive.get("boxShadow", "")
+
+    @boxShadow.setter
+    def boxShadow(self, value: Union[str, Dict[str, str]]) -> None:
+        """Set box-shadow (full CSS string)."""
+        self._responsive.set("boxShadow", value)
+        self._update_styling()
+
     # Event Handling Integration
     def mousePressEvent(self, event) -> None:
         """
@@ -315,6 +465,39 @@ class Box(LayoutComponent):
             self._layout.addWidget(child)
         # For grid/flex advanced props, extend here (e.g., grid span)
 
+    def center_content(self) -> None:
+        """Convenience method to center content both horizontally and vertically."""
+        self.justify = "center"
+        self.align = "center"
+
+    def vertical_stack(self) -> None:
+        """Convenience method to set up as a vertical flex stack."""
+        self.display = "flex"
+        self.direction = "column"
+        self.wrap = False
+        self.align = "stretch"
+
+    def horizontal_stack(self) -> None:
+        """Convenience method to set up as a horizontal flex stack."""
+        self.display = "flex"
+        self.direction = "row"
+        self.wrap = False
+        self.align = "stretch"
+
+    @classmethod
+    def card(cls, **kwargs) -> "Box":
+        """Class method to create a card-style Box with common defaults."""
+        defaults = {
+            "p": "md",
+            "bg": "white",
+            "c": "text",
+            "border": "1px solid gray.300",
+            "borderRadius": "md",
+            "boxShadow": "0 1px 3px rgba(0, 0, 0, 0.12)",
+        }
+        defaults.update(kwargs)
+        return cls(**defaults)
+
     def _get_current_breakpoint(self) -> str:
         """Helper from base, but ensure it's available."""
         # Copied from base.py for completeness
@@ -325,3 +508,12 @@ class Box(LayoutComponent):
             if width >= bp_width:
                 current_bp = bp_name
         return current_bp
+
+    def _get_spacing_pixels(self, spacing_value: Union[str, int]) -> int:
+        """Convert spacing value to pixels using theme."""
+        if self._provider:
+            if isinstance(spacing_value, str):
+                return self._provider.get_theme_value(f"spacing.{spacing_value}", 8)
+            elif isinstance(spacing_value, int):
+                return spacing_value
+        return 8 if isinstance(spacing_value, str) else int(spacing_value)

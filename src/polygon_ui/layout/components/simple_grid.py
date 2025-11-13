@@ -19,19 +19,24 @@ class SimpleGrid(LayoutComponent):
     """
     SimpleGrid component that provides a basic CSS Grid-like layout using QGridLayout.
 
-    Arranges children in equal-width columns with responsive column counts and
-    configurable spacing. Designed for simple, mobile-first responsive layouts
-    without complex spanning or offsetting.
+    Arranges children in equal-width columns with responsive column counts, separate
+    horizontal/vertical spacing, auto-fit sizing, and smooth resize handling.
+    Designed for simple, mobile-first responsive layouts without complex spanning
+    or offsetting.
 
     Mobile-first approach: starts with fewer columns on small screens and increases
-    on larger breakpoints.
+    on larger breakpoints. Supports auto-fit columns that dynamically adjust based
+    on available width and minimum column width for optimal responsive behavior.
     """
 
     def __init__(
         self,
         parent: Optional[QWidget] = None,
         cols: Union[int, Dict[str, int]] = 1,
-        spacing: Union[str, int, Dict[str, Union[str, int]]] = "md",
+        hspacing: Union[str, int, Dict[str, Union[str, int]]] = "md",
+        vspacing: Union[str, int, Dict[str, Union[str, int]]] = None,
+        auto_cols: Union[bool, int] = False,
+        min_col_width: int = 250,
         **kwargs: Any,
     ):
         super().__init__(parent=parent, **kwargs)
@@ -41,7 +46,14 @@ class SimpleGrid(LayoutComponent):
 
         # Set initial responsive properties (mobile-first)
         self._responsive.set("cols", cols)
-        self._responsive.set("spacing", spacing)
+        if vspacing is None:
+            vspacing = hspacing
+        self._responsive.set("hspacing", hspacing)
+        self._responsive.set("vspacing", vspacing)
+
+        self._auto_cols = auto_cols
+        self._min_col_width = min_col_width
+        self._last_width = 0
 
         # Setup grid layout
         self._setup_layout()
@@ -63,6 +75,14 @@ class SimpleGrid(LayoutComponent):
                 return spacing_value
         return 8 if isinstance(spacing_value, str) else spacing_value
 
+    def _get_min_col_width(self) -> int:
+        """Get the minimum column width, from theme or prop."""
+        if self._provider:
+            theme_min = self._provider.get_theme_value("layout.gridMinColWidth", None)
+            if theme_min is not None:
+                return theme_min
+        return self._min_col_width
+
     def _update_simple_grid_layout(self) -> None:
         """Compute and apply simple grid layout properties."""
         if not self._layout:
@@ -70,18 +90,35 @@ class SimpleGrid(LayoutComponent):
 
         # Get current responsive values
         cols_val = self._responsive.get("cols", 1)
-        num_columns = int(cols_val)
+
+        # Determine number of columns
+        if self._auto_cols:
+            available_width = self.width()
+            if available_width <= 0:
+                num_columns = 1
+            else:
+                min_width = self._get_min_col_width()
+                max_possible = available_width // min_width
+                if isinstance(self._auto_cols, int):
+                    num_columns = min(max_possible, self._auto_cols)
+                else:
+                    num_columns = max_possible
+                num_columns = max(1, num_columns)
+        else:
+            num_columns = int(cols_val)
 
         # Set column count and ensure equal widths
         self._layout.setColumnCount(num_columns)
+        min_width = self._get_min_col_width() if self._auto_cols else 0
         for i in range(num_columns):
             self._layout.setColumnStretch(i, 1)
+            self._layout.setColumnMinimumWidth(i, min_width)
 
-        # Apply uniform spacing (horizontal and vertical)
-        spacing_val = self._responsive.get("spacing", "md")
-        spacing_pixels = self._get_spacing_pixels(spacing_val)
-        self._layout.setHorizontalSpacing(spacing_pixels)
-        self._layout.setVerticalSpacing(spacing_pixels)
+        # Apply spacing (horizontal and vertical)
+        hspacing_val = self._responsive.get("hspacing", "md")
+        vspacing_val = self._responsive.get("vspacing", "md")
+        self._layout.setHorizontalSpacing(self._get_spacing_pixels(hspacing_val))
+        self._layout.setVerticalSpacing(self._get_spacing_pixels(vspacing_val))
 
         # Default alignment: top-left for items
         default_alignment = Qt.AlignLeft | Qt.AlignTop
@@ -134,27 +171,101 @@ class SimpleGrid(LayoutComponent):
         self._update_simple_grid_layout()
 
     @Property(object)
+    def hspacing(self) -> Union[str, int, Dict[str, Union[str, int]]]:
+        """Get the current horizontal spacing value (responsive)."""
+        return self._responsive.get("hspacing", "md")
+
+    @hspacing.setter
+    def hspacing(self, value: Union[str, int, Dict[str, Union[str, int]]]) -> None:
+        """Set the horizontal spacing (responsive)."""
+        self._responsive.set("hspacing", value)
+        self._update_simple_grid_layout()
+
+    @Property(object)
+    def vspacing(self) -> Union[str, int, Dict[str, Union[str, int]]]:
+        """Get the current vertical spacing value (responsive)."""
+        return self._responsive.get("vspacing", "md")
+
+    @vspacing.setter
+    def vspacing(self, value: Union[str, int, Dict[str, Union[str, int]]]) -> None:
+        """Set the vertical spacing (responsive)."""
+        self._responsive.set("vspacing", value)
+        self._update_simple_grid_layout()
+
+    @Property(object)
     def spacing(self) -> Union[str, int, Dict[str, Union[str, int]]]:
-        """Get the current spacing value (responsive)."""
-        return self._responsive.get("spacing", "md")
+        """Get the current uniform spacing value (responsive, for backward compatibility)."""
+        return self._responsive.get("hspacing", "md")  # Use hspacing as representative
 
     @spacing.setter
     def spacing(self, value: Union[str, int, Dict[str, Union[str, int]]]) -> None:
-        """Set the uniform spacing (responsive)."""
-        self._responsive.set("spacing", value)
+        """Set the uniform spacing for both horizontal and vertical (responsive)."""
+        self._responsive.set("hspacing", value)
+        self._responsive.set("vspacing", value)
         self._update_simple_grid_layout()
 
     def resizeEvent(self, event) -> None:
         """Handle resize events to update responsive props and relayout."""
         super().resizeEvent(event)
-        self._update_simple_grid_layout()
+        new_width = event.size().width()
+        if not hasattr(self, "_last_width"):
+            self._last_width = new_width
+        if abs(new_width - self._last_width) >= 5:
+            self._last_width = new_width
+            self._update_simple_grid_layout()
 
     def responsive_cols(self, breakpoints: Dict[str, int]) -> "SimpleGrid":
         """Convenience method to set responsive column counts (mobile-first)."""
         self.cols = breakpoints
         return self
 
+    @Property(bool)
+    def auto_cols(self) -> Union[bool, int]:
+        """Get whether auto-columns mode is enabled."""
+        return self._auto_cols
+
+    @auto_cols.setter
+    def auto_cols(self, value: Union[bool, int]) -> None:
+        """Set auto-columns mode (True for unlimited, int for max columns)."""
+        self._auto_cols = value
+        self._update_simple_grid_layout()
+
+    @Property(int)
+    def min_col_width(self) -> int:
+        """Get the minimum column width in pixels."""
+        return self._min_col_width
+
+    @min_col_width.setter
+    def min_col_width(self, value: int) -> None:
+        """Set the minimum column width in pixels."""
+        self._min_col_width = value
+        self._update_simple_grid_layout()
+
+    def auto_fit(
+        self, max_columns: Optional[int] = None, min_width: Optional[int] = None
+    ) -> "SimpleGrid":
+        """Convenience method to enable auto-fit columns (CSS Grid auto-fit like)."""
+        self.auto_cols = max_columns if max_columns is not None else True
+        if min_width is not None:
+            self.min_col_width = min_width
+        return self
+
+    def responsive_hspacing(
+        self, breakpoints: Dict[str, Union[str, int]]
+    ) -> "SimpleGrid":
+        """Convenience method to set responsive horizontal spacing."""
+        self.hspacing = breakpoints
+        return self
+
+    def responsive_vspacing(
+        self, breakpoints: Dict[str, Union[str, int]]
+    ) -> "SimpleGrid":
+        """Convenience method to set responsive vertical spacing."""
+        self.vspacing = breakpoints
+        return self
+
     def fixed_cols(self, count: int) -> "SimpleGrid":
         """Convenience method to set fixed number of columns."""
         self.cols = count
+        self.auto_cols = False
         return self

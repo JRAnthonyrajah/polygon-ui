@@ -158,7 +158,7 @@ class TestSimpleGridResponsive:
     """Tests for responsive behavior."""
 
     def test_responsive_cols(self, simple_grid, responsive_helper):
-        """Test responsive column changes."""
+        """Test responsive column changes and distribution."""
         simple_grid.cols = {"xs": 1, "sm": 2, "md": 3, "lg": 4}
         expected = {"xs": 1, "sm": 2, "md": 3, "lg": 4}
 
@@ -166,36 +166,99 @@ class TestSimpleGridResponsive:
             simple_grid._responsive, "cols", expected
         )
 
-        # Test layout changes
-        for label in range(8):
-            simple_grid.add_child(QLabel(f"Resp {label}"))
+        # Add children for testing distribution
+        child_labels = []
+        for i in range(8):
+            label = QLabel(f"Resp {i}")
+            label.setMinimumSize(80, 50)
+            simple_grid.add_child(label)
+            child_labels.append(label)
 
-        # At xs (width < 640): 1 col
+        # Test at xs: 1 column, stacked vertically
         responsive_helper.set_width(500)
         QApplication.processEvents()
         assert simple_grid._layout.columnCount() == 1
+        # Children should be in one column, multiple rows
+        for i, label in enumerate(child_labels):
+            expected_y = i * 60  # Approx height + spacing
+            actual = label.geometry()
+            assert actual.x() == 0
+            assert actual.y() == expected_y  # Stacked
 
-        # At md (768+): 3 cols
+        # Test at sm: 2 columns
+        responsive_helper.set_width(650)
+        QApplication.processEvents()
+        assert simple_grid._layout.columnCount() == 2
+        # Row 0: children 0,1 at x=0 and x~250
+        assert child_labels[0].x() == 0
+        assert child_labels[1].x() > 200  # Gap and width
+        # Row 1: 2,3 same y, different x
+        assert child_labels[2].y() == child_labels[0].y()  # Same row height
+        assert child_labels[3].x() > 200
+
+        # Test at md: 3 columns
         responsive_helper.set_width(800)
         QApplication.processEvents()
         assert simple_grid._layout.columnCount() == 3
+        col_width = 800 // 3  # Approx
+        for i, label in enumerate(child_labels[:3]):  # First row
+            assert label.x() == i * col_width
+        for i in range(3, 6):  # Second row
+            row_i = (i - 3) % 3
+            assert child_labels[i].x() == row_i * col_width
+
+        # Test at lg: 4 columns (but only 8 children: 2 rows)
+        responsive_helper.set_width(1200)
+        QApplication.processEvents()
+        assert simple_grid._layout.columnCount() == 4
+        col_width = 1200 // 4  # 300
+        for i, label in enumerate(child_labels[:4]):
+            assert label.x() == i * col_width
 
     def test_responsive_spacing(self, simple_grid, responsive_helper):
-        """Test responsive spacing."""
-        simple_grid.hspacing = {"sm": "sm", "md": "md", "lg": "lg"}
-        simple_grid.vspacing = {"sm": "sm", "md": "md", "lg": "lg"}
+        """Test responsive hspacing and vspacing behavior."""
+        simple_grid.hspacing = {"xs": 4, "sm": 8, "md": 16, "lg": 24}
+        simple_grid.vspacing = {"xs": 4, "sm": 8, "md": 16, "lg": 24}
         simple_grid.cols = 2
-        for label in range(4):
-            simple_grid.add_child(QLabel(f"Spacing {label}"))
+        child_labels = []
+        for i in range(6):  # 2 rows, 3 cols but cols=2 so 3 rows
+            label = QLabel(f"Spacing {i}")
+            label.setFixedSize(100, 50)
+            simple_grid.add_child(label)
+            child_labels.append(label)
 
-        # Verify resolution at different breakpoints
-        responsive_helper.set_width(500)  # xs/sm
+        # At xs: small spacing
+        responsive_helper.set_width(500)
         QApplication.processEvents()
-        h_gap_small = simple_grid._layout.horizontalSpacing()
-        responsive_helper.set_width(800)  # md
+        h_gap = simple_grid._get_spacing_pixels(4)  # xs
+        v_gap = simple_grid._get_spacing_pixels(4)
+        # Horizontal: between col 0 and 1 in row 0
+        assert child_labels[1].x() == child_labels[0].width() + h_gap
+        # Vertical: between row 0 and 1
+        assert child_labels[2].y() == child_labels[0].height() + v_gap
+
+        # At md: larger spacing
+        responsive_helper.set_width(800)
         QApplication.processEvents()
-        h_gap_medium = simple_grid._layout.horizontalSpacing()
-        assert h_gap_medium > h_gap_small  # md > sm
+        h_gap_md = simple_grid._get_spacing_pixels(16)  # md
+        v_gap_md = simple_grid._get_spacing_pixels(16)
+        assert child_labels[1].x() == child_labels[0].width() + h_gap_md
+        assert child_labels[2].y() == child_labels[0].height() + v_gap_md
+        assert h_gap_md > h_gap  # Increased
+
+        # Test string spacing if supported
+        simple_grid.hspacing = {"lg": "lg"}
+        responsive_helper.set_width(1200)
+        QApplication.processEvents()
+        lg_gap = simple_grid._get_spacing_pixels("lg")
+        assert lg_gap == 24  # Assuming theme spacing
+
+        # Verify vspacing independently
+        simple_grid.vspacing = {"sm": "sm"}
+        responsive_helper.set_width(650)
+        QApplication.processEvents()
+        sm_gap = simple_grid._get_spacing_pixels("sm")
+        assert child_labels[2].y() == child_labels[0].height() + sm_gap
 
     def test_smooth_breakpoint_transitions(self, simple_grid, child_labels):
         """Test smooth transitions on resize (via resizeEvent)."""

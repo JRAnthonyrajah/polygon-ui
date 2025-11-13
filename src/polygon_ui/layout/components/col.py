@@ -35,6 +35,9 @@ class Col(LayoutComponent):
         span: Union[int, Dict[str, int]] = 12,
         offset: Union[int, Dict[str, int]] = 0,
         order: Union[int, Dict[str, int]] = 0,
+        visible: Union[bool, Dict[str, bool]] = True,
+        min_width: Union[int, Dict[str, int]] = 0,
+        max_width: Union[int, Dict[str, Optional[int]]] = None,
         **kwargs: Any,
     ):
         super().__init__(parent=parent, **kwargs)
@@ -46,6 +49,9 @@ class Col(LayoutComponent):
         self._set_span(span)
         self._set_offset(offset)
         self._set_order(order)
+        self._set_visible(visible)
+        self._set_min_width(min_width)
+        self._set_max_width(max_width)
 
         # Setup internal layout for children
         self._setup_layout()
@@ -117,6 +123,11 @@ class Col(LayoutComponent):
                 parent._child_layout_props[self] = self._get_layout_props()
             if hasattr(parent, "_update_grid_layout"):
                 parent._update_grid_layout()
+        # Update visibility based on responsive props
+        resolved_visible = self._responsive._resolve_value(
+            self._responsive.get("visible", True)
+        )
+        self.setVisible(resolved_visible)
         # Smooth transition: slight delay for layout update if needed
         QTimer.singleShot(
             50,
@@ -305,6 +316,66 @@ class Col(LayoutComponent):
         validated = self._validate_order_config(value)
         self._responsive.set("order", validated)
 
+    def _set_visible(self, value: Union[bool, Dict[str, bool]]) -> None:
+        """Private method to set visibility with responsive support."""
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        full_visible = {}
+
+        if isinstance(value, bool):
+            full_visible = {bp: value for bp in breakpoints_order}
+        elif isinstance(value, dict):
+            current = True
+            full_visible["base"] = value.get("base", True)
+            for bp in breakpoints_order[1:]:
+                current = value.get(bp, current)
+                full_visible[bp] = current
+        else:
+            full_visible = {bp: True for bp in breakpoints_order}
+
+        self._responsive.set("visible", full_visible)
+
+    def _set_min_width(self, value: Union[int, Dict[str, int]]) -> None:
+        """Private method to set min_width with responsive support (pixels)."""
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        full_min_width = {}
+
+        if isinstance(value, int):
+            full_min_width = {bp: value for bp in breakpoints_order}
+        elif isinstance(value, dict):
+            current = 0
+            full_min_width["base"] = value.get("base", 0)
+            for bp in breakpoints_order[1:]:
+                current = value.get(bp, current)
+                full_min_width[bp] = current
+        else:
+            full_min_width = {bp: 0 for bp in breakpoints_order}
+
+        # Ensure non-negative
+        for bp in breakpoints_order:
+            full_min_width[bp] = max(0, full_min_width[bp])
+
+        self._responsive.set("min_width", full_min_width)
+
+    def _set_max_width(self, value: Union[int, Dict[str, Optional[int]]]) -> None:
+        """Private method to set max_width with responsive support (pixels, None means no max)."""
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        full_max_width = {}
+
+        if value is None:
+            full_max_width = {bp: None for bp in breakpoints_order}
+        elif isinstance(value, int):
+            full_max_width = {bp: value for bp in breakpoints_order}
+        elif isinstance(value, dict):
+            current = None
+            full_max_width["base"] = value.get("base")
+            for bp in breakpoints_order[1:]:
+                current = value.get(bp, current)
+                full_max_width[bp] = current
+        else:
+            full_max_width = {bp: None for bp in breakpoints_order}
+
+        self._responsive.set("max_width", full_max_width)
+
     # Col Properties (integrated with responsive system)
 
     @Property(object)
@@ -339,6 +410,39 @@ class Col(LayoutComponent):
     def order(self, value: Union[int, Dict[str, int]]) -> None:
         """Set the visual order (responsive)."""
         self._set_order(value)
+        self._update_responsive_props()
+
+    @Property(bool)
+    def visible(self) -> bool:
+        """Get the current visibility state (resolved for current breakpoint)."""
+        return self._responsive._resolve_value(self._responsive.get("visible", True))
+
+    @visible.setter
+    def visible(self, value: Union[bool, Dict[str, bool]]) -> None:
+        """Set the visibility (responsive)."""
+        self._set_visible(value)
+        self._update_responsive_props()
+
+    @Property(object)
+    def min_width(self) -> Union[int, Dict[str, int]]:
+        """Get the current min_width constraint (responsive, in pixels)."""
+        return self._responsive.get("min_width", 0)
+
+    @min_width.setter
+    def min_width(self, value: Union[int, Dict[str, int]]) -> None:
+        """Set the min_width constraint (responsive)."""
+        self._set_min_width(value)
+        self._update_responsive_props()
+
+    @Property(object)
+    def max_width(self) -> Union[int, Dict[str, Optional[int]]]:
+        """Get the current max_width constraint (responsive, in pixels; None means no max)."""
+        return self._responsive.get("max_width", None)
+
+    @max_width.setter
+    def max_width(self, value: Union[int, Dict[str, Optional[int]]]) -> None:
+        """Set the max_width constraint (responsive)."""
+        self._set_max_width(value)
         self._update_responsive_props()
 
     def resizeEvent(self, event) -> None:

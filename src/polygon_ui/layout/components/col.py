@@ -34,6 +34,7 @@ class Col(LayoutComponent):
         parent: Optional[QWidget] = None,
         span: Union[int, Dict[str, int]] = 1,
         offset: Union[int, Dict[str, int]] = 0,
+        order: Union[int, Dict[str, int]] = 0,
         **kwargs: Any,
     ):
         super().__init__(parent=parent, **kwargs)
@@ -44,6 +45,7 @@ class Col(LayoutComponent):
         # Set initial responsive properties
         self._set_span(span)
         self._set_offset(offset)
+        self._set_order(order)
 
         # Setup internal layout for children
         self._setup_layout()
@@ -59,11 +61,11 @@ class Col(LayoutComponent):
         self._layout.setSpacing(0)  # Can be made responsive later
 
     def _get_layout_props(self) -> Dict[str, Any]:
-        """Get layout properties for Grid integration (colspan, offset, etc.)."""
+        """Get layout properties for Grid integration (colspan, offset, order, etc.)."""
         return {
             "colspan": self._responsive.get("span", 1),
             "offset": self._responsive.get("offset", 0),
-            # order, etc. added in future tasks
+            "order": self._responsive.get("order", 0),
         }
 
     def _auto_integrate_parent(self) -> None:
@@ -87,6 +89,7 @@ class Col(LayoutComponent):
         # Revalidate properties with new parent context
         self._set_span(self._responsive.get("span", 1))
         self._set_offset(self._responsive.get("offset", 0))
+        self._set_order(self._responsive.get("order", 0))
         if parent != old_parent and parent and Grid and isinstance(parent, Grid):
             self._auto_integrate_parent()
 
@@ -162,6 +165,32 @@ class Col(LayoutComponent):
         validated = self._validate_offset_config(current)
         self._responsive.set("offset", validated)
 
+    def _validate_order_config(
+        self, value: Union[int, Dict[str, int]]
+    ) -> Union[int, Dict[str, int]]:
+        """Validate order config to positive integers with reasonable upper bound."""
+        MAX_ORDER = 100  # Reasonable upper bound for visual ordering
+
+        def validate_order(v: int, key: str = "base") -> int:
+            if not isinstance(v, int) or v < 0:
+                return 0  # 0 means fallback to DOM order
+            return min(v, MAX_ORDER)
+
+        if isinstance(value, int):
+            return validate_order(value)
+        elif isinstance(value, dict):
+            return {
+                k: validate_order(vv, k)
+                for k, vv in value.items()
+                if isinstance(vv, (int, float))
+            }
+        return 0
+
+    def _set_order(self, value: Union[int, Dict[str, int]]) -> None:
+        """Private method to set order with validation."""
+        validated = self._validate_order_config(value)
+        self._responsive.set("order", validated)
+
     # Col Properties (integrated with responsive system)
 
     @Property(object)
@@ -185,6 +214,17 @@ class Col(LayoutComponent):
     def offset(self, value: Union[int, Dict[str, int]]) -> None:
         """Set the column offset (responsive)."""
         self._set_offset(value)
+        self._update_responsive_props()
+
+    @Property(object)
+    def order(self) -> Union[int, Dict[str, int]]:
+        """Get the current visual order (responsive). Order 0 means fallback to DOM order."""
+        return self._responsive.get("order", 0)
+
+    @order.setter
+    def order(self, value: Union[int, Dict[str, int]]) -> None:
+        """Set the visual order (responsive)."""
+        self._set_order(value)
         self._update_responsive_props()
 
     def resizeEvent(self, event) -> None:

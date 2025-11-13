@@ -4,7 +4,7 @@ Polygon UI
 Description: A library/framework of UI components for Qt/PySide, similar to Mantine for webapps
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Core imports
 from .core import PolygonProvider, PolygonComponent, ComponentFactory

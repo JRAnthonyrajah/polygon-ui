@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polygon-ui"
-version = "0.1.0"
+version = "0.2.0"
 description = "A library/framework of UI components for Qt/PySide, similar to Mantine for webapps"
 authors = [
     "K3rm1t <janthonyrajah@gmail.com>"
@@ -36,7 +36,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0"
+version = "0.2.0"
 tag_format = "v$version"
 version_files = [
     "pyproject.toml:version",

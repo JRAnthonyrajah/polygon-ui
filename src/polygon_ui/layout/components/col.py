@@ -8,11 +8,11 @@ Uses QVBoxLayout internally for child content arrangement.
 
 from typing import Optional, Any, Dict, Union
 from PySide6.QtWidgets import QWidget, QVBoxLayout
-from PySide6.QtCore import Qt, Property
+from PySide6.QtCore import Qt, Property, QTimer
 
 from ...core.provider import PolygonProvider
 from ..core.base import LayoutComponent
-from ..core.responsive import ResponsiveProps
+from ..core.responsive import ResponsiveProps, BreakpointSystem
 
 try:
     from .grid import Grid
@@ -62,19 +62,22 @@ class Col(LayoutComponent):
 
     def _get_layout_props(self) -> Dict[str, Any]:
         """Get layout properties for Grid integration (colspan, offset, order, etc.)."""
-        current_span = self._responsive.get("span", {"base": 12})
-        if isinstance(current_span, dict):
-            # Resolve current breakpoint span
-            current_bp = BreakpointSystem.get_breakpoint_for_width(self.width())
-            resolved_span = self._responsive._resolve_value(
-                current_span
-            )  # Use internal resolve with inheritance
-        else:
-            resolved_span = current_span
+
+        def resolve_prop(prop_name, default):
+            val = self._responsive.get(prop_name, default)
+            if isinstance(val, dict):
+                current_bp = BreakpointSystem.get_breakpoint_for_width(self.width())
+                return self._responsive._resolve_value(val)
+            return val
+
+        resolved_span = resolve_prop("span", {"base": 12})
+        resolved_offset = resolve_prop("offset", {"base": 0})
+        resolved_order = resolve_prop("order", {"base": 0})
+
         return {
             "colspan": resolved_span,
-            "offset": self._responsive.get("offset", 0),
-            "order": self._responsive.get("order", 0),
+            "offset": resolved_offset,
+            "order": resolved_order,
         }
 
     def _auto_integrate_parent(self) -> None:
@@ -193,16 +196,87 @@ class Col(LayoutComponent):
         return 0
 
     def _set_offset(self, value: Union[int, Dict[str, int]]) -> None:
-        """Private method to set offset with validation against parent Grid columns and current span."""
-        validated = self._validate_offset_config(value)
-        # Normalize offset similar to span for consistency (future enhancement)
-        self._responsive.set("offset", validated)
-        self._revalidate_offset()
+        """Private method to set offset with validation against parent Grid columns and current span.
+        Normalizes to full breakpoint dict with mobile-first inheritance."""
+        parent = self.parent()
+        max_cols = 12
+        if parent and Grid and isinstance(parent, Grid):
+            max_cols = getattr(parent, "columns", 12)
+
+        # Get current span config for validation
+        span_config = self._responsive.get(
+            "span", {bp: 12 for bp in ["base", "sm", "md", "lg", "xl"]}
+        )
+
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        full_offset = {}
+        current_offset = 0  # Default base offset
+
+        if isinstance(value, int):
+            current_offset = value
+            full_offset = {bp: current_offset for bp in breakpoints_order}
+        elif isinstance(value, dict):
+            # Base
+            if "base" not in value:
+                current_offset = 0
+            else:
+                current_offset = value.get("base", 0)
+            full_offset["base"] = current_offset
+
+            # Inherit forward for larger breakpoints
+            for bp in breakpoints_order[1:]:
+                if bp in value:
+                    current_offset = value[bp]
+                full_offset[bp] = current_offset
+        else:
+            full_offset = {bp: 0 for bp in breakpoints_order}
+
+        # Validate each breakpoint's offset against corresponding span
+        def validate_offset_for_bp(bp: str, off: int) -> int:
+            if not isinstance(off, int) or off < 0:
+                return 0
+            span_bp = (
+                span_config.get(bp, 12)
+                if isinstance(span_config, dict)
+                else span_config
+            )
+            max_off = max_cols - span_bp
+            return min(off, max_off)
+
+        validated_full = {
+            bp: validate_offset_for_bp(bp, off) for bp, off in full_offset.items()
+        }
+
+        self._responsive.set("offset", validated_full)
+        self._update_responsive_props()
 
     def _revalidate_offset(self) -> None:
         """Revalidate current offset config after span or parent changes."""
-        current = self._responsive.get("offset", 0)
-        validated = self._validate_offset_config(current)
+        parent = self.parent()
+        max_cols = 12
+        if parent and Grid and isinstance(parent, Grid):
+            max_cols = getattr(parent, "columns", 12)
+
+        span_config = self._responsive.get("span", 12)
+        current_offset = self._responsive.get("offset", 0)
+
+        # Ensure current_offset is dict
+        if isinstance(current_offset, int):
+            current_offset = {
+                bp: current_offset for bp in ["base", "sm", "md", "lg", "xl"]
+            }
+
+        # Validate each
+        def validate(bp, off):
+            if not isinstance(off, int) or off < 0:
+                return 0
+            span_bp = (
+                span_config if isinstance(span_config, int) else span_config.get(bp, 12)
+            )
+            max_off = max_cols - span_bp
+            return min(off, max_off)
+
+        validated = {bp: validate(bp, off) for bp, off in current_offset.items()}
         self._responsive.set("offset", validated)
 
     def _validate_order_config(
@@ -295,3 +369,67 @@ class Col(LayoutComponent):
         """Convenience method: Set dynamic span based on content (fallback to 12)."""
         # For now, default to full width; advanced content-based calculation can be added later
         self.span = 12
+
+    def offset_center(self) -> None:
+        """Convenience method: Center the column responsively based on span and grid columns."""
+        parent = self.parent()
+        max_cols = 12
+        if parent and Grid and isinstance(parent, Grid):
+            max_cols = getattr(parent, "columns", 12)
+
+        span_config = self._responsive.get("span", 12)
+        if isinstance(span_config, int):
+            span_config = {bp: span_config for bp in ["base", "sm", "md", "lg", "xl"]}
+
+        offset_config = {}
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        for bp in breakpoints_order:
+            span_bp = span_config.get(bp, 12)
+            offset_config[bp] = (max_cols - span_bp) // 2
+
+        self.offset = offset_config
+
+    def offset_right(self) -> None:
+        """Convenience method: Move column to the right edge responsively."""
+        parent = self.parent()
+        max_cols = 12
+        if parent and Grid and isinstance(parent, Grid):
+            max_cols = getattr(parent, "columns", 12)
+
+        span_config = self._responsive.get("span", 12)
+        if isinstance(span_config, int):
+            span_config = {bp: span_config for bp in ["base", "sm", "md", "lg", "xl"]}
+
+        offset_config = {}
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        for bp in breakpoints_order:
+            span_bp = span_config.get(bp, 12)
+            offset_config[bp] = max(0, max_cols - span_bp)
+
+        self.offset = offset_config
+
+    def offset_left(self) -> None:
+        """Convenience method: Reset offset to 0 (left alignment) responsively."""
+        self.offset = 0
+
+    def offset_auto(self) -> None:
+        """Convenience method: Dynamic offset based on span (center if not full width)."""
+        parent = self.parent()
+        max_cols = 12
+        if parent and Grid and isinstance(parent, Grid):
+            max_cols = getattr(parent, "columns", 12)
+
+        span_config = self._responsive.get("span", 12)
+        if isinstance(span_config, int):
+            span_config = {bp: span_config for bp in ["base", "sm", "md", "lg", "xl"]}
+
+        offset_config = {}
+        breakpoints_order = ["base", "sm", "md", "lg", "xl"]
+        for bp in breakpoints_order:
+            span_bp = span_config.get(bp, 12)
+            if span_bp >= max_cols:
+                offset_config[bp] = 0
+            else:
+                offset_config[bp] = (max_cols - span_bp) // 2  # Center as auto
+
+        self.offset = offset_config

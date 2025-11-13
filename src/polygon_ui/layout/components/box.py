@@ -55,6 +55,16 @@ class Box(LayoutComponent):
         # Layout props
         display: str = "block",  # 'block', 'flex', 'grid'
         direction: str = "row",  # for flex/grid
+        justify: Union[str, Dict[str, str]] = "start",
+        align: Union[str, Dict[str, str]] = "stretch",
+        gap: Union[str, int, Dict[str, Union[str, int]], None] = None,
+        wrap: Union[bool, str, Dict[str, Union[bool, str]], None] = None,
+        # Size props
+        width: Union[str, Dict[str, str], None] = None,
+        height: Union[str, Dict[str, str], None] = None,
+        # Advanced style props
+        borderRadius: Union[str, Dict[str, str], None] = None,
+        boxShadow: Union[str, Dict[str, str], None] = None,
         **kwargs: Any,
     ):
         super().__init__(parent=parent, **kwargs)
@@ -139,6 +149,10 @@ class Box(LayoutComponent):
         Get the current responsive value for a style property and convert to CSS string.
         Uses theme provider for spacing and colors.
         """
+        # Handle case where _responsive hasn't been initialized yet (during parent __init__)
+        if not hasattr(self, "_responsive"):
+            return default
+
         value = self._responsive.get(prop_key, default)
         if not value:
             return ""
@@ -215,7 +229,6 @@ class Box(LayoutComponent):
 
     def _update_layout_styling(self) -> None:
         """Update layout-specific styling (gaps, alignment)."""
-        super()._update_layout_styling()
 
         if self._layout:
             # Gap
@@ -392,23 +405,23 @@ class Box(LayoutComponent):
 
     # Additional Style Properties
     @Property(str)
-    def width(self) -> str:
+    def size_width(self) -> str:
         """Get the current width value."""
         return self._responsive.get("width", "auto")
 
-    @width.setter
-    def width(self, value: Union[str, Dict[str, str]]) -> None:
+    @size_width.setter
+    def size_width(self, value: Union[str, Dict[str, str]]) -> None:
         """Set width (supports px, %, auto, theme keys)."""
         self._responsive.set("width", value)
         self._update_size_props()
 
     @Property(str)
-    def height(self) -> str:
+    def size_height(self) -> str:
         """Get the current height value."""
         return self._responsive.get("height", "auto")
 
-    @height.setter
-    def height(self, value: Union[str, Dict[str, str]]) -> None:
+    @size_height.setter
+    def size_height(self, value: Union[str, Dict[str, str]]) -> None:
         """Set height (supports px, %, auto, theme keys)."""
         self._responsive.set("height", value)
         self._update_size_props()

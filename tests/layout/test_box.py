@@ -10,7 +10,6 @@ from PySide6.QtGui import QFont, QPalette, QColor
 
 from polygon_ui.layout.components.box import Box
 from polygon_ui.layout.core.responsive import ResponsiveProps
-from polygon_ui.layout.core.style_props import StyleProps
 from conftest import ResponsiveTestHelper
 import time
 import gc
@@ -48,16 +47,16 @@ class TestBoxBasic:
         """Test Box initialization."""
         assert isinstance(box, Box)
         assert box.display == "block"
-        assert box.direction is None  # Default for block
-        assert box.justify is None
-        assert box.align is None
-        assert box.gap is None
-        assert box.wrap is False
+        assert box.direction == "row"  # Default direction
+        assert box.justify == "start"  # Default justify
+        assert box.align == "stretch"  # Default align
+        assert box.gap is None  # Default gap
+        assert box.wrap is False  # Default wrap
         # Style props default to None or empty
         assert box.m is None
         assert box.p is None
         assert box.bg is None
-        assert box.color is None
+        assert box.c is None  # color property
 
     def test_add_child(self, box, child_labels):
         """Test adding children to Box."""

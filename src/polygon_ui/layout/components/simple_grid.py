@@ -107,8 +107,8 @@ class SimpleGrid(LayoutComponent):
         else:
             num_columns = int(cols_val)
 
-        # Set column count and ensure equal widths
-        self._layout.setColumnCount(num_columns)
+        # Set column stretches to ensure equal widths (QGridLayout doesn't have setColumnCount)
+        # The actual column count is determined by where items are placed
         min_width = self._get_min_col_width() if self._auto_cols else 0
         for i in range(num_columns):
             self._layout.setColumnStretch(i, 1)

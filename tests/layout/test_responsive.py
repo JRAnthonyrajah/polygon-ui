@@ -4,7 +4,8 @@ Tests for the responsive design system.
 
 import pytest
 from PySide6.QtWidgets import QApplication, QWidget
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, QTimer
+from PySide6.QtTest import QTest  # If needed for events
 
 from src.polygon_ui.layout.core.responsive import (
     Breakpoint,
@@ -14,6 +15,8 @@ from src.polygon_ui.layout.core.responsive import (
     cols,
     spacing,
 )
+
+from tests.layout.conftest import ResponsiveTestHelper
 
 
 @pytest.fixture
@@ -26,11 +29,8 @@ def app():
     return app
 
 
-@pytest.fixture
-def widget(app):
-    """Create a test widget."""
-    widget = QWidget()
-    return widget
+# Use qt_widget from conftest.py
+# The responsive_helper fixture is now available
 
 
 class TestBreakpointSystem:

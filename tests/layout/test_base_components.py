@@ -24,10 +24,9 @@ def app():
 
 
 @pytest.fixture
-def parent_widget(app):
+def parent_widget(app, qt_widget):
     """Create a parent widget for testing."""
-    widget = QWidget()
-    return widget
+    return qt_widget
 
 
 class TestLayoutComponent:

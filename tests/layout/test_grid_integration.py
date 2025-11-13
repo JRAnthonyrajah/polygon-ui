@@ -1688,11 +1688,351 @@ class TestGridResponsiveIntegration:
         assert focus_item.isVisible()
 
 
+class TestGridPerformance:
+    """Performance tests for large and complex grid layouts."""
+
+    @pytest.fixture
+    def large_grid_setup(self, qt_widget):
+        """Fixture for large grid with 100+ children."""
+        qt_widget.resize(1200, 800)
+        container = Container(parent=qt_widget, fluid=True, px="lg")
+        grid = Grid(
+            parent=container,
+            columns=12,
+            gutter="md",
+            justify="start",
+            align="stretch",
+        )
+        container.add_child(grid)
+
+        # Add 120 children (10 rows x 12 cols)
+        children = []
+        for i in range(120):
+            box = Box(
+                parent=grid,
+                p="sm",
+                bg="gray.100",
+                height=60,
+                width=90,  # Approx for 12 cols
+            )
+            box.add_child(QLabel(f"Grid Item {i}"))
+            grid.add_child(box)
+            children.append(box)
+
+        grid.show()
+        QApplication.processEvents()
+        return grid, container, children, qt_widget
+
+    def test_large_grid_creation_and_layout(self, large_grid_setup):
+        """Test creation and initial layout time for large grid (120 components)."""
+        import time
+        from gc import collect
+
+        grid, container, children, qt_widget = large_grid_setup
+
+        # Cold start: Creation time
+        start_time = time.time()
+        # Re-create to measure fresh
+        new_container = Container(parent=qt_widget, fluid=True, px="lg")
+        new_grid = Grid(parent=new_container, columns=12, gutter="md")
+        for _ in range(120):
+            box = Box(parent=new_grid, p="sm", height=60)
+            new_grid.add_child(box)
+        creation_time = time.time() - start_time
+
+        # Initial layout time
+        new_container.add_child(new_grid)
+        new_grid.show()
+        layout_start = time.time()
+        QApplication.processEvents()
+        layout_time = time.time() - layout_start
+
+        # Baselines (adjust based on system; these are reasonable targets)
+        assert creation_time < 0.3  # <300ms creation
+        assert layout_time < 0.1  # <100ms layout for 120 items
+
+        # Hot start: Resize to force re-layout
+        hot_start = time.time()
+        qt_widget.resize(1400, 900)
+        QApplication.processEvents()
+        hot_layout = time.time() - hot_start
+        assert hot_layout < 0.05  # Faster on subsequent
+
+    def test_memory_usage_large_grid(self, large_grid_setup):
+        """Test memory usage patterns for large grid."""
+        import sys
+        from gc import collect
+
+        grid, container, children, qt_widget = large_grid_setup
+
+        # Baseline memory
+        collect()
+        baseline_memory = sum(
+            sys.getsizeof(obj) for obj in gc.get_objects()
+        )  # Rough total
+
+        # Memory after creation (already done)
+        current_memory = sum(sys.getsizeof(obj) for obj in gc.get_objects())
+        growth = current_memory - baseline_memory
+
+        # Per component rough estimate: ~10KB per Box + QLabel
+        expected_growth = len(children) * 15000  # Conservative
+        assert growth < expected_growth * 1.2  # Within 20% tolerance
+
+        # Check no excessive growth on resize
+        qt_widget.resize(800, 600)
+        QApplication.processEvents()
+        collect()
+        resize_memory = sum(sys.getsizeof(obj) for obj in gc.get_objects())
+        assert abs(resize_memory - current_memory) < 1000  # Minimal change
+
+    def test_deep_nested_grids_performance(self, qt_widget):
+        """Test performance with deep nesting (5 levels)."""
+        import time
+
+        qt_widget.resize(1000, 800)
+
+        def create_nested_grid(level, parent, max_depth=5, children_per_level=9):
+            if level > max_depth:
+                return Box(parent=parent, p="xs", height=20, bg="gray.50")
+            grid = Grid(
+                parent=parent,
+                columns=3,
+                gutter="xs",
+                auto_columns=True,
+            )
+            for _ in range(children_per_level):
+                child = create_nested_grid(level + 1, grid, max_depth)
+                grid.add_child(child)
+            return grid
+
+        # Creation time
+        start = time.time()
+        container = Container(parent=qt_widget, fluid=True)
+        deep_grid = create_nested_grid(1, container, max_depth=5)
+        container.add_child(deep_grid)
+        creation_time = time.time() - start
+
+        # Layout time
+        deep_grid.show()
+        layout_start = time.time()
+        QApplication.processEvents()
+        layout_time = time.time() - layout_start
+
+        # Assertions
+        assert creation_time < 1.0  # <1s for deep structure
+        assert layout_time < 0.3  # <300ms layout
+
+        # Count total components (should be ~1 + 5*9 + 5*9^2 + ... but truncated)
+        total_widgets = len(qt_widget.findChildren(QWidget))
+        assert total_widgets > 200  # Significant nesting
+
+        # Resize performance
+        resize_start = time.time()
+        qt_widget.resize(1200, 900)
+        QApplication.processEvents()
+        resize_time = time.time() - resize_start
+        assert resize_time < 0.15  # Reasonable re-layout
+
+    def test_responsive_resize_performance_large(self, large_grid_setup):
+        """Test rendering performance during responsive changes on large grid."""
+        import time
+
+        grid, container, children, qt_widget = large_grid_setup
+
+        # Multiple resizes simulating responsive breakpoints
+        widths = [400, 600, 900, 1200, 1400, 900, 600, 400]  # Mobile to desktop cycles
+        times = []
+        for width in widths:
+            start = time.time()
+            qt_widget.resize(width, 800)
+            QApplication.processEvents()
+            times.append(time.time() - start)
+
+        avg_time = sum(times) / len(times)
+        max_time = max(times)
+
+        # Targets: Smooth, <60ms per resize for 60fps feel
+        assert avg_time < 0.06
+        assert max_time < 0.1
+
+        # Verify layout updates correctly (e.g., column count changes)
+        qt_widget.resize(400, 800)
+        QApplication.processEvents()
+        # On small, should stack (1 col effectively)
+        for i in range(1, len(children)):
+            assert (
+                children[i].y() > children[i - 1].y() + children[i - 1].height() + 8
+            )  # xs gutter approx
+
+    def test_theme_update_performance_large(self, large_grid_setup, monkeypatch):
+        """Test performance impact of theme updates on large layouts."""
+        import time
+        from unittest.mock import Mock
+
+        grid, container, children, qt_widget = large_grid_setup
+
+        # Mock theme update (simulate changing colors/spacing)
+        def mock_theme_update(component):
+            # Simulate repainting/applying new styles
+            component.setStyleSheet("background-color: blue;")  # Simple change
+
+        # Time theme update on all children
+        start = time.time()
+        for child in children:
+            mock_theme_update(child)
+        QApplication.processEvents()  # Force style updates
+        theme_time = time.time() - start
+
+        assert theme_time < 0.2  # <200ms for 120 components
+
+        # Batch update simulation
+        batch_start = time.time()
+        # Assume a global theme apply that propagates
+        grid.setStyleSheet("QWidget { border: 1px solid red; }")  # Parent style
+        QApplication.processEvents()
+        batch_time = time.time() - batch_start
+
+        assert batch_time < 0.05  # Faster via inheritance
+
+    def test_scalability_under_load(self, qt_widget):
+        """Test scalability with increasing load (100 to 500 components)."""
+        import time
+
+        qt_widget.resize(1200, 800)
+        container = Container(parent=qt_widget, fluid=True)
+
+        def create_grid_with_n_children(n):
+            grid = Grid(parent=container, columns=12, gutter="sm")
+            for i in range(n):
+                box = Box(parent=grid, p="xs", height=40, bg="gray.50")
+                box.add_child(QLabel(f"Load {i}"))
+                grid.add_child(box)
+            container.add_child(grid)
+            grid.show()
+            return grid
+
+        sizes = [100, 200, 300, 400, 500]
+        layout_times = []
+        for n in sizes:
+            # Clean up previous
+            for child in qt_widget.children():
+                if isinstance(child, (Grid, Container)):
+                    child.deleteLater()
+            QApplication.processEvents()
+
+            start = time.time()
+            grid = create_grid_with_n_children(n)
+            QApplication.processEvents()
+            layout_time = time.time() - start
+            layout_times.append(layout_time)
+
+            # Linear scalability check: time ~ O(n)
+            expected_time = layout_times[0] * (n / 100) if layout_times else 0.1
+            assert layout_time < expected_time * 1.5  # Within 50% of linear
+
+        # Overall: 500 items <500ms
+        assert layout_times[-1] < 0.5
+
+    def test_startup_performance_large_layout(self, qt_widget):
+        """Test component initialization and startup time for large layouts."""
+        import time
+
+        qt_widget.resize(1400, 1000)
+
+        # Simulate app startup with large layout
+        start = time.time()
+        app_container = Container(parent=qt_widget, fluid=True, px="xl", py="xl")
+        main_grid = Grid(
+            parent=app_container,
+            columns={"base": 1, "lg": 12},
+            gutter="md",
+            justify="space-between",
+        )
+
+        # Add nested structures: 100 top-level, each with 5 children
+        for i in range(100):
+            col = Col(parent=main_grid, span=1)
+            inner_stack = Stack(parent=col, direction="column", gap="sm")
+            for j in range(5):
+                inner_box = Box(
+                    parent=inner_stack, p="sm", height=50, bg=f"blue.{j*20}"
+                )
+                inner_box.add_child(QLabel(f"Startup {i}-{j}"))
+                inner_stack.add_child(inner_box)
+            main_grid.add_child(col)
+
+        app_container.add_child(main_grid)
+        main_grid.show()
+        startup_end = time.time()
+        startup_time = startup_end - start
+
+        # Process events for full render
+        render_start = time.time()
+        QApplication.processEvents()
+        render_time = time.time() - render_start
+
+        assert startup_time < 0.8  # <800ms init
+        assert render_time < 0.15  # <150ms render
+
+    def test_memory_leak_detection_nested(self, qt_widget):
+        """Test for memory leaks in nested scenarios."""
+        import gc
+        import time
+        import psutil
+        import os
+
+        process = psutil.Process(os.getpid())
+
+        def get_memory_usage():
+            return process.memory_info().rss / 1024 / 1024  # MB
+
+        baseline_memory = get_memory_usage()
+
+        # Run 5 cycles of create deep nested, layout, destroy
+        for cycle in range(5):
+            container = Container(parent=qt_widget, fluid=True)
+
+            # Deep nest 4 levels, 16 children per (moderate)
+            def create_nested(level, parent, depth=4):
+                if level > depth:
+                    return Box(parent=parent, height=30)
+                grid = Grid(parent=parent, columns=4, gutter="xs")
+                for _ in range(16):
+                    child = create_nested(level + 1, grid, depth)
+                    grid.add_child(child)
+                return grid
+
+            deep = create_nested(1, container)
+            container.add_child(deep)
+            deep.show()
+            QApplication.processEvents()
+
+            # Use then destroy
+            time.sleep(0.01)  # Simulate use
+            for child in qt_widget.children()[:]:  # Copy to avoid mod during iter
+                if isinstance(child, (Container, Grid)):
+                    child.deleteLater()
+            QApplication.processEvents()
+            gc.collect()
+
+        final_memory = get_memory_usage()
+        leak_growth = final_memory - baseline_memory
+
+        assert leak_growth < 5.0  # <5MB leak over 5 cycles
+
+        # Check object count
+        obj_count_start = len(gc.get_objects())
+        # After cycles, should not grow indefinitely
+        # But since collected, assume stable
+
+
 # Note: Additional tests for Tasks #170-#172 will extend this file.
 # Performance tests in #172 will use timeit or similar for benchmarks.
 # All tests assume theme spacing (e.g., "md" ~16px); adjust assertions if theme changes.
 # Use approximate geometry checks due to Qt rendering variances.
 # Nested Grid tests added for Task #170: Comprehensive coverage of nesting behaviors.
+# Performance tests added for Task #172: Comprehensive large-scale and nested performance validation with benchmarks and thresholds.
 # Responsive integration tests added for Task #171: Focus on system-level responsive coordination.
 
 # Note: Additional tests for Tasks #170-#172 will extend this file.

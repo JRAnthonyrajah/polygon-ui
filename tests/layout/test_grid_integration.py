@@ -439,7 +439,401 @@ class TestGridComplexScenarios:
         )  # Vertical order
 
 
+class TestNestedGridBehavior:
+    """Test comprehensive nested Grid behavior, parent-child interactions, and complex nesting."""
+
+    @pytest.fixture
+    def nested_grid_setup(self, qt_widget):
+        """Fixture for common nested Grid setup."""
+        qt_widget.resize(1200, 800)
+        outer_container = Container(parent=qt_widget, fluid=True, px="lg", py="xl")
+        outer_grid = Grid(
+            parent=outer_container,
+            columns={"base": 1, "md": 2, "lg": 3},
+            gutter="md",
+            justify="start",
+            align="stretch",
+        )
+        outer_container.add_child(outer_grid)
+        outer_grid.show()
+        QApplication.processEvents()
+        return outer_grid, outer_container, qt_widget
+
+    def test_nested_grid_different_columns(self, nested_grid_setup):
+        """Test Grid inside Grid with different column configurations."""
+        outer_grid, container, qt_widget = nested_grid_setup
+
+        # Inner Grid with different columns: 4 cols vs outer's 3
+        inner_grid = Grid(
+            parent=outer_grid,
+            columns=4,
+            gutter="sm",
+            auto_columns=True,
+            min_column_width=100,
+        )
+
+        # Add 8 items to inner grid to span multiple rows
+        for i in range(8):
+            box = Box(parent=inner_grid, p="sm", bg=f"gray.{i % 10}")
+            box.add_child(QLabel(f"Inner Item {i}"))
+            inner_grid.add_child(box)
+
+        # Add inner_grid to first cell of outer_grid
+        outer_grid.add_child(inner_grid)
+
+        # Add simple content to other outer cells
+        for i in range(2):
+            outer_box = Box(parent=outer_grid, p="md", bg="blue.100")
+            outer_box.add_child(QLabel(f"Outer Cell {i}"))
+            outer_grid.add_child(outer_box)
+
+        QApplication.processEvents()
+
+        # Assertions: Inner grid fits within outer cell, has 4 columns
+        assert inner_grid.parent() == outer_grid
+        assert abs(inner_grid.width() - outer_grid.width() / 3) < 5  # First cell on lg
+        # Inner items should be arranged in 4 cols within inner width
+        row1_items = inner_grid.children()[:4]
+        for item in row1_items:
+            assert abs(item.width() - inner_grid.width() / 4) < 5
+        # Responsive: On md (2 cols outer), inner still 4 but narrower
+        qt_widget.resize(800, 800)
+        QApplication.processEvents()
+        assert outer_grid._layout.columnCount() == 2
+        assert all(
+            abs(item.width() - inner_grid.width() / 4) < 5 for item in row1_items
+        )
+
+    def test_three_level_nesting(self, nested_grid_setup):
+        """Test three-level nesting: Grid → Grid → Grid."""
+        outer_grid, container, qt_widget = nested_grid_setup
+
+        # Level 1: Outer Grid (3 cols)
+        # Level 2: Middle Grid in first cell (2 cols)
+        middle_grid = Grid(
+            parent=outer_grid,
+            columns=2,
+            gutter="md",
+            justify="center",
+        )
+
+        # Level 3: Inner Grid in first cell of middle (3 cols)
+        inner_grid = Grid(
+            parent=middle_grid,
+            columns=3,
+            gutter="sm",
+            auto_columns=True,
+        )
+
+        # Add content to innermost
+        for i in range(6):
+            innermost_box = Box(parent=inner_grid, p="xs", bg="green.100")
+            innermost_box.add_child(QLabel(f"Deep Item {i}"))
+            inner_grid.add_child(innermost_box)
+
+        middle_grid.add_child(inner_grid)
+
+        # Add more to middle
+        middle_box = Box(parent=middle_grid, p="sm", bg="yellow.100")
+        middle_box.add_child(QLabel("Middle Content"))
+        middle_grid.add_child(middle_box)
+
+        outer_grid.add_child(middle_grid)
+
+        # Fill other outer cells
+        for i in range(2):
+            outer_box = Box(parent=outer_grid, p="md")
+            outer_box.add_child(QLabel(f"Outer {i}"))
+            outer_grid.add_child(outer_box)
+
+        QApplication.processEvents()
+
+        # Assertions: Hierarchy correct, geometries nested
+        assert inner_grid.parent() == middle_grid
+        assert middle_grid.parent() == outer_grid
+        assert (
+            abs(inner_grid.width() - outer_grid.width() / 3 / 2) < 5
+        )  # Nested fractions
+        # Items in inner grid span 3 cols within its width
+        inner_items = inner_grid.children()
+        assert len(inner_items) == 6
+        assert all(
+            abs(item.width() - inner_grid.width() / 3) < 5 for item in inner_items[:3]
+        )
+        # Deep nesting doesn't break layout
+        assert all(item.isVisible() for item in inner_items)
+
+    def test_responsive_nested_grids(self, nested_grid_setup):
+        """Test responsive behavior in nested Grid layouts with different breakpoints."""
+        outer_grid, container, qt_widget = nested_grid_setup
+
+        # Outer: responsive columns
+        # Inner: different responsive setup
+        inner_grid = Grid(
+            parent=outer_grid,
+            columns={"base": 1, "sm": 2, "md": 4},
+            gutter={"base": "xs", "md": "md"},
+            min_column_width=120,
+        )
+
+        # Add 8 items
+        items = []
+        for i in range(8):
+            item = Box(parent=inner_grid, p="sm", height=80, bg=f"purple.{i % 10}")
+            item.add_child(QLabel(f"Resp Item {i}"))
+            inner_grid.add_child(item)
+            items.append(item)
+
+        outer_grid.add_child(inner_grid)
+
+        # Other outer cells
+        outer_flex = Flex(parent=outer_grid, direction="column", gap="sm")
+        for i in range(2):
+            outer_flex.add_child(QLabel(f"Responsive Outer {i}"))
+        outer_grid.add_child(outer_flex)
+
+        # Large screen (lg: outer 3 cols, inner 4 cols)
+        qt_widget.resize(1400, 900)
+        QApplication.processEvents()
+        assert outer_grid._layout.columnCount() == 3
+        assert inner_grid._layout.columnCount() == 4
+        row1 = items[:4]
+        assert all(item.y() == 0 for item in row1)
+        assert all(abs(item.width() - inner_grid.width() / 4) < 5 for item in row1)
+
+        # Medium (md: outer 2, inner 4 but constrained)
+        qt_widget.resize(900, 900)
+        QApplication.processEvents()
+        assert outer_grid._layout.columnCount() == 2
+        assert inner_grid._layout.columnCount() == 4  # Still 4, but narrower cols
+        assert all(item.width() < 200 for item in items)  # Adjusted
+
+        # Small (base: outer 1, inner 1)
+        qt_widget.resize(400, 900)
+        QApplication.processEvents()
+        assert outer_grid._layout.columnCount() == 1
+        assert inner_grid._layout.columnCount() == 1
+        for i in range(1, 8):
+            assert (
+                items[i].y() > items[i - 1].y() + items[i - 1].height() + 4
+            )  # xs gutter
+
+    def test_parent_child_interactions(self, nested_grid_setup):
+        """Test parent-child Grid interactions and layout coordination."""
+        outer_grid, container, qt_widget = nested_grid_setup
+
+        inner_grid = Grid(
+            parent=outer_grid,
+            columns=3,
+            gutter="md",
+            justify="space-between",  # Different from outer's start
+            align="center",  # Different alignment
+        )
+
+        # Child spans: some full width, some partial
+        full_span = Col(parent=inner_grid, span=3)  # Full across inner
+        full_span.add_child(QLabel("Full Span Child"))
+
+        partial1 = Box(parent=inner_grid, span=1)
+        partial1.add_child(QLabel("Partial 1"))
+        partial2 = Box(parent=inner_grid, span=2, offset=1)
+        partial2.add_child(QLabel("Partial 2 with offset"))
+
+        inner_grid.add_child(full_span)
+        inner_grid.add_child(partial1)
+        inner_grid.add_child(partial2)
+
+        outer_grid.add_child(inner_grid)
+
+        # Simple outer sibling
+        sibling = Box(parent=outer_grid, p="lg", bg="gray.200")
+        sibling.add_child(QLabel("Outer Sibling"))
+        outer_grid.add_child(sibling)
+
+        QApplication.processEvents()
+
+        # Assertions: Child interactions don't affect parent, alignments respected
+        assert abs(full_span.width() - inner_grid.width()) < 5  # Full span
+        assert abs(partial1.width() - inner_grid.width() / 3) < 5
+        assert abs(partial2.width() - inner_grid.width() * 2 / 3) < 5
+        assert (
+            abs(partial2.x() - (inner_grid.width() / 3 + 16)) < 5
+        )  # offset + gutter md~16
+        # Parent alignment: outer start, so inner x=0 in first cell
+        assert inner_grid.x() == 0
+        # Child center align: items y-centered in rows
+        assert partial1.y() == partial2.y()  # Same row
+        # No overflow or conflict
+        assert inner_grid.height() > 0 and sibling.height() > 0
+
+    def test_nested_grid_performance(self, qt_widget):
+        """Test nested Grid performance characteristics - layout calculation time."""
+        import time
+
+        qt_widget.resize(1000, 800)
+
+        # Create deep nesting: 3 levels, each with 9 children (3x3 grid)
+        def create_nested_grid(level, parent, depth=3):
+            if level > depth:
+                return Box(parent=parent, p="xs", bg="gray.100")
+            grid = Grid(
+                parent=parent,
+                columns=3,
+                gutter="sm",
+                auto_columns=True,
+            )
+            for _ in range(9):
+                child = create_nested_grid(level + 1, grid, depth)
+                grid.add_child(child)
+            return grid
+
+        start_time = time.time()
+        root_container = Container(parent=qt_widget, fluid=True)
+        deep_grid = create_nested_grid(1, root_container)
+        root_container.add_child(deep_grid)
+        creation_time = time.time() - start_time
+
+        # Force layout
+        deep_grid.show()
+        QApplication.processEvents()
+
+        layout_start = time.time()
+        qt_widget.resize(1200, 900)
+        QApplication.processEvents()
+        layout_time = time.time() - layout_start
+
+        # Assertions: Performance within reasonable bounds (approximate, non-deterministic)
+        assert creation_time < 0.5  # Seconds to create deep structure
+        assert layout_time < 0.2  # Seconds to layout on resize
+        # Widget count: 1 + 3 grids * 9 children each, but recursive
+        total_widgets = len(qt_widget.findChildren(QWidget))
+        assert total_widgets > 20  # At least some nesting
+        assert total_widgets < 100  # Not excessive
+
+        # Memory pattern: Simple size check (rough)
+        import sys
+
+        memory_usage = sys.getsizeof(deep_grid) + sum(
+            sys.getsizeof(c) for c in deep_grid.children()
+        )
+        assert memory_usage > 1000  # Bytes, rough estimate
+
+    def test_layout_inheritance_conflicts(self, nested_grid_setup):
+        """Test layout inheritance and conflicts in nested scenarios."""
+        outer_grid, container, qt_widget = nested_grid_setup
+
+        # Outer: justify start, align stretch
+        # Inner: override to justify end, align start - test if conflicts
+        inner_grid = Grid(
+            parent=outer_grid,
+            columns=2,
+            gutter="md",
+            justify="end",  # Conflicts with outer start
+            align="start",  # Conflicts with outer stretch
+        )
+
+        # Items with different sizes to test alignment
+        tall_item = Box(
+            parent=inner_grid, height=150, bg="red.200", alignSelf="stretch"
+        )
+        tall_item.add_child(QLabel("Tall Item"))
+        short_item1 = Box(parent=inner_grid, height=80, bg="blue.200")
+        short_item1.add_child(QLabel("Short 1"))
+        short_item2 = Box(parent=inner_grid, height=80, bg="green.200")
+        short_item2.add_child(QLabel("Short 2"))
+
+        inner_grid.add_child(tall_item)
+        inner_grid.add_child(short_item1)
+        inner_grid.add_child(short_item2)
+
+        outer_grid.add_child(inner_grid)
+
+        QApplication.processEvents()
+
+        # Assertions: Inner props take precedence, no inheritance conflict
+        assert inner_grid.justify == "end"  # Set on inner
+        # Justify end: items pushed to right in row
+        assert (
+            short_item1.x() > 0 and short_item2.x() > short_item1.x()
+        )  # In row, end-aligned
+        # Align start: short items at top, tall stretches if set
+        assert short_item1.y() == 0 and tall_item.y() == 0  # Same row start
+        assert (
+            short_item1.height() == 80 and tall_item.height() == 150
+        )  # No forced stretch
+        # Parent doesn't override: outer start keeps inner at left of cell
+        assert inner_grid.x() == 0
+
+    def test_edge_cases_nested_grids(self, nested_grid_setup):
+        """Test edge cases and error handling in nested Grids."""
+        outer_grid, container, qt_widget = nested_grid_setup
+
+        # Case 1: Inner with 0 columns (invalid, should default or error)
+        invalid_inner = Grid(
+            parent=outer_grid,
+            columns=0,  # Invalid
+            gutter="sm",
+        )
+        # Expect: Defaults to 1 or handles gracefully
+        try:
+            invalid_inner.add_child(QLabel("Invalid Item"))
+            outer_grid.add_child(invalid_inner)
+            QApplication.processEvents()
+            assert invalid_inner._layout.columnCount() >= 1  # Handled
+        except Exception as e:
+            pytest.fail(f"Unexpected error in invalid columns: {e}")
+
+        # Case 2: Over-spanning child in inner (span > columns)
+        inner_grid = Grid(
+            parent=outer_grid,
+            columns=2,
+            gutter="xs",
+        )
+        over_span = Col(parent=inner_grid, span=3)  # >2
+        over_span.add_child(QLabel("Over Span"))
+        inner_grid.add_child(over_span)
+        inner_grid.add_child(Box(parent=inner_grid, span=1).add_child(QLabel("Normal")))
+
+        outer_grid.add_child(inner_grid)
+        QApplication.processEvents()
+
+        # Expect: Clamped to available width
+        assert over_span.width() <= inner_grid.width()  # Full width
+        assert over_span.width() >= inner_grid.width() / 2 * 1.5  # Approx clamped
+
+        # Case 3: Deep nesting performance edge (100 levels - but limit to avoid crash)
+        # Skip extreme, test moderate deep with no crash
+        deep_inner = Grid(parent=outer_grid, columns=1)
+        current = deep_inner
+        for _ in range(10):  # Moderate depth
+            next_level = Grid(parent=current, columns=1)
+            current.add_child(next_level)
+            current = next_level
+        final_box = Box(parent=current).add_child(QLabel("Deep Edge"))
+        current.add_child(final_box)
+
+        outer_grid.add_child(deep_inner)
+        QApplication.processEvents()
+
+        assert final_box.isVisible()  # No crash, layout propagates
+        # Memory: Rough check, no leak indication
+        before_memory = qt_widget.findChildren(QWidget)
+        qt_widget.resize(1100, 850)
+        QApplication.processEvents()
+        after_memory = qt_widget.findChildren(QWidget)
+        assert len(after_memory) == len(before_memory)  # No extra leaks in resize
+
+        # Case 4: Nested with no children - empty layout
+        empty_inner = Grid(parent=outer_grid, columns=5)
+        outer_grid.add_child(empty_inner)
+        QApplication.processEvents()
+        assert (
+            empty_inner.height() == 0 or empty_inner.sizeHint().height() == 0
+        )  # Collapses
+
+
 # Note: Additional tests for Tasks #170-#172 will extend this file.
 # Performance tests in #172 will use timeit or similar for benchmarks.
 # All tests assume theme spacing (e.g., "md" ~16px); adjust assertions if theme changes.
 # Use approximate geometry checks due to Qt rendering variances.
+# Nested Grid tests added for Task #170: Comprehensive coverage of nesting behaviors.

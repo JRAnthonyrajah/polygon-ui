@@ -246,3 +246,313 @@ class TestCol:
             )
             props = col._get_layout_props()
             assert props["offset"] == 6  # Clamped
+
+    def test_responsive_span_mobile_first(self, col):
+        """Test mobile-first span patterns across breakpoints."""
+        col.span = {"base": 12, "md": 6, "lg": 4}
+
+        # Test base (mobile)
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 12
+
+        # Test md
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 6
+
+        # Test lg
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "lg",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 4
+
+        # Test xl (inherits from lg)
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "xl",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 4  # Inherits from lg
+
+    def test_responsive_offset_changes(self, col):
+        """Test offset responsive changes across breakpoints."""
+        col.offset = {"base": 0, "md": 2, "lg": 4}
+        col.span = 6  # Fixed span for offset testing
+
+        # Base
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            props = col._get_layout_props()
+            assert props["offset"] == 0
+
+        # md
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            props = col._get_layout_props()
+            assert props["offset"] == 2
+
+        # lg
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "lg",
+            )
+            props = col._get_layout_props()
+            assert props["offset"] == 4
+
+        # xl inherits lg
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "xl",
+            )
+            props = col._get_layout_props()
+            assert props["offset"] == 4
+
+    def test_responsive_order_changes(self, col):
+        """Test order responsive changes across breakpoints."""
+        col.order = {"base": 1, "md": 2, "lg": 3}
+
+        # Base
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            props = col._get_layout_props()
+            assert props["order"] == 1
+
+        # md
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            props = col._get_layout_props()
+            assert props["order"] == 2
+
+        # lg
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "lg",
+            )
+            props = col._get_layout_props()
+            assert props["order"] == 3
+
+    def test_responsive_inheritance_patterns(self, col):
+        """Test responsive inheritance (missing breakpoints inherit from previous)."""
+        col.span = {"base": 12, "lg": 3}  # Missing sm, md, xl
+
+        # Base
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 12
+
+        # sm (inherits base)
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "sm",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 12
+
+        # md (inherits from sm/base)
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 12
+
+        # lg
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "lg",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 3
+
+        # xl (inherits lg)
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "xl",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 3
+
+    def test_complex_responsive_scenario(self, col):
+        """Test complex responsive scenarios with multiple props changing."""
+        col.span = {"base": 12, "sm": 6, "md": 4, "lg": 3, "xl": 2}
+        col.offset = {"base": 0, "md": 1, "xl": 5}
+        col.order = {"base": 0, "lg": 1}
+
+        # Base: span=12, offset=0, order=0
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 12
+            assert props["offset"] == 0
+            assert props["order"] == 0
+
+        # sm: span=6, offset=0 (inherits), order=0 (inherits)
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "sm",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 6
+            assert props["offset"] == 0
+            assert props["order"] == 0
+
+        # md: span=4, offset=1, order=0
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 4
+            assert props["offset"] == 1
+            assert props["order"] == 0
+
+        # lg: span=3, offset=1 (inherits), order=1
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "lg",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 3
+            assert props["offset"] == 1
+            assert props["order"] == 1
+
+        # xl: span=2, offset=5, order=1 (inherits)
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "xl",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 2
+            assert (
+                props["offset"] == 5
+            )  # Valid for span 2? Wait, max offset 10, but assuming 12-col
+            assert props["order"] == 1
+
+    def test_responsive_prop_validation(self, col):
+        """Test responsive prop validation across breakpoints."""
+        col.span = {"base": 13, "md": 0, "lg": -1}  # Invalid values
+        col.offset = {"base": 13, "md": -1}
+
+        # Base: span clamped to 12, offset to 0
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 12
+            assert props["offset"] == 0  # Clamped
+
+        # md: span to 1, offset to 0
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            props = col._get_layout_props()
+            assert props["colspan"] == 1
+            assert props["offset"] == 0
+
+    def test_responsive_with_grid_integration(self, grid_parent):
+        """Test responsive Col behavior with Grid parent integration."""
+        col1 = Col(parent=grid_parent, span={"base": 12, "md": 6})
+        col2 = Col(parent=grid_parent, span={"base": 12, "md": 6})
+
+        # Mock base
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            props1 = grid_parent._child_layout_props[col1]
+            props2 = grid_parent._child_layout_props[col2]
+            assert props1["colspan"] == 12
+            assert props2["colspan"] == 12
+
+        # Mock md - should update
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            # Trigger update by accessing props
+            props1 = grid_parent._child_layout_props[col1]
+            props2 = grid_parent._child_layout_props[col2]
+            assert props1["colspan"] == 6
+            assert props2["colspan"] == 6
+
+        # Test offset in grid
+        col3 = Col(parent=grid_parent, span=6, offset={"md": 3})
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            props3 = grid_parent._child_layout_props[col3]
+            assert props3["colspan"] == 6
+            assert props3["offset"] == 3
+
+    def test_responsive_transitions(self, col, qtbot):
+        """Test responsive transitions and layout updates (basic)."""
+        # This tests that changing breakpoint mock updates props
+        # Full transition testing would require resize events, but here we test prop reactivity
+        col.span = {"base": 12, "md": 6}
+
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "base",
+            )
+            initial_props = col._get_layout_props()
+            assert initial_props["colspan"] == 12
+
+            # "Transition" by changing mock
+            m.setattr(
+                "polygon_ui.layout.core.responsive.BreakpointSystem.get_breakpoint_for_width",
+                lambda w: "md",
+            )
+            updated_props = col._get_layout_props()
+            assert updated_props["colspan"] == 6

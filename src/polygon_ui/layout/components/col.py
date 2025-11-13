@@ -1,0 +1,120 @@
+"""
+Col component for Polygon UI layout system.
+
+A column component for use within Grid layouts, providing span, offset, order, and positioning props.
+Automatically integrates with Grid parent for layout properties.
+Uses QVBoxLayout internally for child content arrangement.
+"""
+
+from typing import Optional, Any, Dict, Union
+from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtCore import Qt, Property
+
+from ...core.provider import PolygonProvider
+from ..core.base import LayoutComponent
+from ..core.responsive import ResponsiveProps
+
+try:
+    from .grid import Grid
+except ImportError:
+    Grid = None  # Fallback if grid not available yet
+
+
+class Col(LayoutComponent):
+    """
+    Col component that provides grid column functionality within a Grid parent.
+
+    Supports span for column width, with automatic integration when parented to a Grid.
+    Uses responsive props for breakpoint-specific behavior.
+    Internally uses QVBoxLayout for vertical arrangement of child content.
+    """
+
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        span: Union[int, Dict[str, int]] = 1,
+        **kwargs: Any,
+    ):
+        super().__init__(parent=parent, **kwargs)
+
+        # Responsive props handler
+        self._responsive = ResponsiveProps(self)
+
+        # Set initial responsive properties
+        self._responsive.set("span", span)
+
+        # Setup internal layout for children
+        self._setup_layout()
+
+        # Auto-integrate if parent is Grid
+        self._auto_integrate_parent()
+
+    def _setup_layout(self) -> None:
+        """Set up the internal QVBoxLayout for child content."""
+        self._layout = QVBoxLayout(self)
+        self.setLayout(self._layout)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(0)  # Can be made responsive later
+
+    def _get_layout_props(self) -> Dict[str, Any]:
+        """Get layout properties for Grid integration (colspan, etc.)."""
+        return {
+            "colspan": self._responsive.get("span", 1),
+            # Offset, order, etc. added in future tasks
+        }
+
+    def _auto_integrate_parent(self) -> None:
+        """Auto-detect and integrate with Grid parent."""
+        parent = self.parent()
+        if parent and Grid and isinstance(parent, Grid):
+            # Ensure in parent's children list
+            if hasattr(parent, "_children") and self not in parent._children:
+                parent._children.append(self)
+            # Set layout props
+            if hasattr(parent, "_child_layout_props"):
+                parent._child_layout_props[self] = self._get_layout_props()
+            # Trigger parent update
+            if hasattr(parent, "_update_grid_layout"):
+                parent._update_grid_layout()
+
+    def setParent(self, parent: Optional[QWidget]) -> None:
+        """Override setParent to auto-integrate with new Grid parent."""
+        old_parent = self.parent()
+        super().setParent(parent)
+        if parent != old_parent and parent and Grid and isinstance(parent, Grid):
+            self._auto_integrate_parent()
+
+    def _update_responsive_props(self) -> None:
+        """Update responsive properties and notify Grid parent if applicable."""
+        super()._update_responsive_props()
+        parent = self.parent()
+        if parent and Grid and isinstance(parent, Grid):
+            if hasattr(parent, "_child_layout_props"):
+                parent._child_layout_props[self] = self._get_layout_props()
+            if hasattr(parent, "_update_grid_layout"):
+                parent._update_grid_layout()
+
+    # Col Properties (integrated with responsive system)
+
+    @Property(object)
+    def span(self) -> Union[int, Dict[str, int]]:
+        """Get the current column span (responsive)."""
+        return self._responsive.get("span", 1)
+
+    @span.setter
+    def span(self, value: Union[int, Dict[str, int]]) -> None:
+        """Set the column span (responsive)."""
+        self._responsive.set("span", value)
+        self._update_responsive_props()
+
+    def resizeEvent(self, event) -> None:
+        """Handle resize events to update responsive props."""
+        super().resizeEvent(event)
+        self._update_responsive_props()
+
+    def add_child(self, child: QWidget, **layout_props: Any) -> None:
+        """Add a child widget to the Col's internal layout."""
+        super().add_child(child, **layout_props)
+        # Since internal layout is QVBoxLayout, add to it
+        if self._layout:
+            self._layout.addWidget(child)

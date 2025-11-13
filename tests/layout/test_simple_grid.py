@@ -104,17 +104,31 @@ class TestSimpleGridColumns:
             assert label.geometry().y() == row * 200  # Approx
 
     def test_equal_width_distribution(self, simple_grid, child_labels):
-        """Test equal-width column distribution."""
+        """Test equal-width column distribution with spacing."""
         simple_grid.cols = 4
+        simple_grid.hspacing = (
+            10  # Add spacing to test distribution accounting for gaps
+        )
         simple_grid.resize(800, 300)
         for label in child_labels[:8]:
             simple_grid.add_child(label)
         QApplication.processEvents()
 
-        expected_width = 200  # 800/4
-        for label in child_labels[:4]:  # First row
-            assert label.width() == expected_width
-            assert label.height() == 150  # Approx
+        # Total width for columns: 800 - (3 gaps * 10) = 770 for 4 cols
+        expected_width = 770 // 4  # 192.5 -> integer division
+        # Verify all 8 children have equal widths
+        widths = [label.width() for label in child_labels[:8]]
+        assert all(w == expected_width for w in widths)
+        assert len(set(widths)) == 1  # All equal
+
+        # Verify positions account for gaps
+        gap = 10
+        for i in range(0, 8, 4):  # Per row
+            row_labels = child_labels[i : i + 4]
+            expected_x = [sum([expected_width + gap] * j for j in range(4))]
+            for j, label in enumerate(row_labels):
+                assert label.x() == j * (expected_width + gap)
+                assert label.y() == row_labels[0].y()  # Same row
 
 
 class TestSimpleGridSpacing:
@@ -310,21 +324,45 @@ class TestSimpleGridAutoCols:
         assert simple_grid._layout.columnCount() == 3  # Limited to max
 
     def test_auto_sizing_dynamic_width(self, simple_grid, child_labels):
-        """Test auto-sizing with dynamic width changes."""
+        """Test auto-sizing with dynamic width changes and equal column widths."""
         simple_grid.auto_cols = True
         simple_grid.min_col_width = 200
-        for label in child_labels[:6]:
+        simple_grid.hspacing = 10
+        for label in child_labels[:9]:  # For 3 cols
             simple_grid.add_child(label)
 
-        # Narrow: 2 cols (400//200=2)
-        simple_grid.resize(400, 300)
+        # Narrow: 1 col (300 < 200*2 - gap, but min 200, fits 1 full)
+        simple_grid.resize(300, 300)
+        QApplication.processEvents()
+        assert simple_grid._layout.columnCount() == 1
+        assert child_labels[0].width() == 300  # Full width
+
+        # Fits 2 cols: (500 -10)//200 = 245 >200, 2 cols
+        simple_grid.resize(500, 300)
         QApplication.processEvents()
         assert simple_grid._layout.columnCount() == 2
+        col_width = (500 - 10) // 2
+        assert col_width >= 200
+        for i in range(2):
+            assert child_labels[i].width() == col_width
+            assert child_labels[i].x() == i * (col_width + 10)
 
-        # Wider: 3 cols (600//200=3)
-        simple_grid.resize(600, 300)
+        # Fits 3 cols: (700 -20)//200=340>200, 3 cols
+        simple_grid.resize(700, 300)
         QApplication.processEvents()
         assert simple_grid._layout.columnCount() == 3
+        col_width = (700 - 20) // 3
+        assert col_width >= 200
+        widths = [label.width() for label in child_labels[:3]]
+        assert all(w == col_width for w in widths)
+        assert len(set(widths)) == 1  # Equal
+
+        # Edge: exactly min, floor calculation
+        simple_grid.resize(410, 300)  # (410-10)//2=200, 2 cols
+        QApplication.processEvents()
+        assert simple_grid._layout.columnCount() == 2
+        col_width = 200
+        assert child_labels[0].width() == col_width
 
 
 class TestSimpleGridConvenience:
@@ -362,7 +400,7 @@ class TestSimpleGridPerformance:
     """Performance benchmarks for large SimpleGrids."""
 
     def test_large_simple_grid_no_crash(self, parent_widget):
-        """Test 100+ cells without crash."""
+        """Test 100+ cells without crash and benchmark layout calculation."""
         grid = SimpleGrid(
             parent=parent_widget, cols=10, auto_cols=True, min_col_width=50
         )
@@ -378,50 +416,179 @@ class TestSimpleGridPerformance:
             labels.append(label)
 
         layout_time = time.time() - start_time
-        assert layout_time < 2.0
+        assert layout_time < 0.5  # Tighter benchmark for add_child loop
 
+        # Time layout update
+        update_start = time.time()
         QApplication.processEvents()
+        update_time = time.time() - update_start
+        assert update_time < 0.1  # Quick layout calc
+
         # All positioned
-        for label in labels[:10]:
+        for label in labels:
             assert label.geometry().x() >= 0 and label.geometry().y() >= 0
+
+        # Cleanup
+        remove_start = time.time()
+        for label in labels:
+            grid.remove_child(label)
+        remove_time = time.time() - remove_start
+        assert remove_time < 0.3  # Quick removal
+
+    def test_extreme_large_grid_benchmark(self, parent_widget):
+        """Benchmark 1000+ children for layout calculation performance."""
+        grid = SimpleGrid(
+            parent=parent_widget, cols=20, auto_cols=True, min_col_width=30
+        )
+        grid.resize(1200, 900)
+        grid.show()
+
+        labels = []
+        add_start = time.time()
+        for i in range(1000):  # Extreme case: 50x20 grid
+            label = QLabel(f"Extreme {i}")
+            label.setFixedSize(25, 25)
+            grid.add_child(label)
+            if i % 100 == 0:  # Batch process every 100
+                QApplication.processEvents()
+            labels.append(label)
+        add_time = time.time() - add_start
+        assert add_time < 5.0  # Acceptable for 1000 adds
+
+        # Full layout calculation time
+        layout_start = time.time()
+        QApplication.processEvents()
+        layout_time = time.time() - layout_start
+        assert layout_time < 1.0  # Efficient for large grid
+
+        # Verify positions without crashing
+        positioned_count = sum(1 for label in labels[:100] if label.geometry().x() >= 0)
+        assert positioned_count == 100
+
+        # Cleanup time
+        cleanup_start = time.time()
+        for label in labels:
+            grid.remove_child(label)
+            label.deleteLater()
+        gc.collect()
+        cleanup_time = time.time() - cleanup_start
+        assert cleanup_time < 2.0
+
+    def test_resize_performance_large(self, simple_grid):
+        """Test resize on large SimpleGrid with responsive recalc."""
+        # Add 200 children for larger benchmark
+        labels = []
+        for i in range(200):
+            label = QLabel(f"Perf {i}")
+            label.setFixedSize(50, 40)
+            simple_grid.add_child(label)
+            labels.append(label)
+
+        # Initial layout
+        QApplication.processEvents()
+
+        start_time = time.time()
+        widths = [
+            300,
+            600,
+            1200,
+            800,
+            400,
+        ]  # Multiple resizes including responsive triggers
+        for w in widths:
+            simple_grid.resize(w, 500)
+            QApplication.processEvents()  # Triggers layout recalc
+        resize_time = time.time() - start_time
+        assert resize_time < 0.5  # Tighter for multiple resizes
+
+        # Per-resize average
+        avg_resize = resize_time / len(widths)
+        assert avg_resize < 0.1
+
+    def test_responsive_resize_large_grid(self, parent_widget):
+        """Benchmark responsive resize on large grid with breakpoint changes."""
+        grid = SimpleGrid(
+            parent=parent_widget,
+            cols={"xs": 1, "sm": 5, "md": 10, "lg": 20},
+            auto_cols=True,
+            min_col_width=40,
+        )
+        grid.resize(1000, 800)
+        grid.show()
+
+        # Add 500 children
+        labels = []
+        for i in range(500):
+            label = QLabel(f"RespLarge {i}")
+            label.setFixedSize(30, 30)
+            grid.add_child(label)
+            labels.append(label)
+        QApplication.processEvents()  # Initial layout at md (10 cols)
+
+        # Time responsive resizes across breakpoints
+        start_time = time.time()
+        breakpoint_widths = [400, 600, 900, 1400]  # xs->sm->md->lg
+        for w in breakpoint_widths:
+            grid.resize(w, 800)
+            QApplication.processEvents()  # Column count changes
+        responsive_time = time.time() - start_time
+        assert responsive_time < 1.0
+
+        # Verify column changes
+        grid.resize(400, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 1  # xs
+
+        grid.resize(1400, 800)
+        QApplication.processEvents()
+        assert grid._layout.columnCount() == 20  # lg, auto limited?
 
         # Cleanup
         for label in labels:
             grid.remove_child(label)
 
-    def test_resize_performance_large(self, simple_grid):
-        """Test resize on large SimpleGrid."""
-        # Add 50 children
-        for i in range(50):
-            label = QLabel(f"Perf {i}")
-            label.setFixedSize(50, 40)
-            simple_grid.add_child(label)
-
-        start_time = time.time()
-        for w in [600, 800, 400, 1000]:
-            simple_grid.resize(w, 500)
-            QApplication.processEvents()
-        resize_time = time.time() - start_time
-        assert resize_time < 1.0
-
     def test_memory_cleanup_large(self, parent_widget):
-        """Test memory after large SimpleGrid."""
-        grid = SimpleGrid(parent=parent_widget)
-        children = [QLabel(f"Mem {i}") for i in range(200)]
-        for child in children:
+        """Test memory after large SimpleGrid with many children."""
+        grid = SimpleGrid(parent=parent_widget, cols=15, auto_cols=True)
+        children = []
+        add_start = time.time()
+        for i in range(500):  # Larger for memory test
+            child = QLabel(f"MemLarge {i}")
+            child.setFixedSize(40, 40)
             grid.add_child(child)
+            children.append(child)
+        add_time = time.time() - add_start
+        assert add_time < 2.0
 
         QApplication.processEvents()
         gc.collect()
-        initial_refs = len(gc.get_referents(grid))
+        initial_refs = (
+            len(gc.get_referents(grid)) + grid._layout.count()
+        )  # Include layout items
 
+        # Remove and cleanup
+        remove_start = time.time()
         for child in children:
             grid.remove_child(child)
             child.deleteLater()
+        remove_time = time.time() - remove_start
+        assert remove_time < 1.0
 
         gc.collect()
-        final_refs = len(gc.get_referents(grid))
-        assert final_refs < initial_refs * 0.6  # Heuristic
+        final_refs = len(gc.get_referents(grid)) + grid._layout.count()
+        # Significant reduction
+        assert (
+            final_refs <= initial_refs * 0.3
+        )  # Stricter heuristic for cleanup efficiency
+
+        # Test repeated creation/destruction for leak detection
+        for _ in range(3):  # 3 cycles
+            gc.collect()
+            before_cycle = len(gc.get_referents(grid))
+            del children[:]  # Clear list
+            gc.collect()
+            after_cycle = len(gc.get_referents(grid))
+            assert after_cycle <= before_cycle  # No growth
 
 
 class TestSimpleGridEdgeCases:

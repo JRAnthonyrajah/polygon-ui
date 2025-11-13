@@ -41,7 +41,7 @@ class Col(LayoutComponent):
         self._responsive = ResponsiveProps(self)
 
         # Set initial responsive properties
-        self._responsive.set("span", span)
+        self._set_span(span)
 
         # Setup internal layout for children
         self._setup_layout()
@@ -93,6 +93,28 @@ class Col(LayoutComponent):
                 parent._child_layout_props[self] = self._get_layout_props()
             if hasattr(parent, "_update_grid_layout"):
                 parent._update_grid_layout()
+
+    def _set_span(self, value: Union[int, Dict[str, int]]) -> None:
+        """Private method to set span with validation against parent Grid columns."""
+        parent = self.parent()
+        if parent and Grid and isinstance(parent, Grid):
+            max_cols = getattr(parent, "columns", 12)
+        else:
+            max_cols = 12
+
+        def validate_span(v):
+            if not isinstance(v, int) or v < 1:
+                return 1
+            return min(v, max_cols)
+
+        if isinstance(value, int):
+            validated_value = validate_span(value)
+        elif isinstance(value, dict):
+            validated_value = {k: validate_span(v) for k, v in value.items()}
+        else:
+            validated_value = 1
+
+        self._responsive.set("span", validated_value)
 
     # Col Properties (integrated with responsive system)
 

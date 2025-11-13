@@ -5,10 +5,8 @@ This module provides a comprehensive layout system for Qt/PySide applications,
 offering modern layout patterns similar to Mantine for web applications.
 """
 
-# Core layout components (will be implemented in future phases)
-# from .core.container import Container
-# from .core.stack import Stack
-# from .core.group import Group
+from .components import Container
+
 # from .core.flex import Flex
 # from .core.box import Box
 
@@ -39,9 +37,7 @@ __all__ = [
     "LayoutComponent",
     "GridComponent",
     "UtilityComponent",
-    # Layout components (coming soon)
-    # "Container",
-    # "Stack",
+    "Container",
     # "Group",
     # "Flex",
     # "Box",
